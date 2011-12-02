@@ -38,9 +38,9 @@ string File::getAbsoluteName() {
 }
 
 void File::setName(string newName) {
-
+    this->name = newName;
 }
 
 void File::setDir(string absPath) {
-
+    this->path = absPath;
 }
