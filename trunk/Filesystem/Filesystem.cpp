@@ -12,7 +12,7 @@ Filesystem::Filesystem(string path) {
     nblock = size*1000/(Block::BLOCK_SIZE);   
     bitmapStartBlockNum = 1;
     irootBlockNum = (int)ceil(nblock/Block::BLOCK_SIZE) + 2;
-    dataStartBlockNum = irootBlockNum + 1;
+    dataStartBlockNum = irootBlockNum + 1;    
     delete[](sizeInBytes);
     delete(superblock);
 }
@@ -23,7 +23,11 @@ Filesystem::Filesystem(const Filesystem& orig) {
 Filesystem::~Filesystem() {
 }
 
-bool Filesystem::format(string path, unsigned int size) {    
+bool Filesystem::format(string path, unsigned int size) {
+    if(size>Filesystem::MAX_SIZE) {
+        printf("filesystem melebihi size maksimum yang diperbolehkan\n");
+        return false;
+    }
     int nblock = size*1000/(Block::BLOCK_SIZE);        
     int BitmapEndBlockNumber = (int)ceil(nblock/Block::BLOCK_SIZE) + 1;//nomor ujung blok bitmap     
     ofstream fout(path.c_str(),ios::out|ios::trunc|ios::binary);
@@ -42,7 +46,7 @@ bool Filesystem::format(string path, unsigned int size) {
     }    
     
     //tulis bitmap di blok ke 1 sampai ceil(nblock/Block::BLOCK_SIZE);
-    for(int i=0;i<nblock;i++) {
+    for(int i=0;i<nblock;i++) {        
         if(i<=BitmapEndBlockNumber+1) {            
             fout<<(byte)1;//blok superblock,bitmap,inode root sudah diisi
         }else{
@@ -79,7 +83,7 @@ bool Filesystem::getBlock(int number, Block *&block) {
     }
     byte data[Block::BLOCK_SIZE];        
     fin.seekg(Block::BLOCK_SIZE*number,ios::beg);                       
-    for(int i=0;i<Block::BLOCK_SIZE;i++) {
+    for(int i=0;i<Block::BLOCK_SIZE;i++) {                
         fin>>data[i];                
     }
     block = new Block(number,data);        
@@ -106,3 +110,21 @@ int Filesystem::getIrootBlockNum() {
 int Filesystem::getDataStartBlockNum() {
     return dataStartBlockNum;
 }
+
+bool Filesystem::isBlockEmpty(int number) {
+    ifstream fin(path,ios::in | ios::binary);
+    if(!fin.is_open() || number<0) {
+        return false;
+    }
+    byte data[Block::BLOCK_SIZE];
+    int bnumber = (number/Block::BLOCK_SIZE)+1;//blok bitmap blok number tersebut berada
+    fin.seekg(Block::BLOCK_SIZE*bnumber+(number%Block::BLOCK_SIZE),ios::beg);        
+    byte test;
+    fin>>test;
+    fin.close();
+    if(test==1) {//terisi
+        return false;
+    }    
+    return true;//kosong
+}
+

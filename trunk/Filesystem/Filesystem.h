@@ -12,7 +12,7 @@ using namespace std;
 class Filesystem {
 public:    
     //size maksimum filesystem(dalam KB)
-    static const int MAX_SIZE=65535;       
+    static const int MAX_SIZE=65535;    
         
     Filesystem(string path);
     Filesystem(const Filesystem& orig);    
@@ -25,13 +25,13 @@ public:
     bool getBlock(int number,Block *&block);
     
     //mengembalikan true jika blok pada number kosong
-    //bool isBlockEmpty(int number);
+    bool isBlockEmpty(int number);
     
     int getSize();
     int getBlockCount();
     int getBitmapStartBlockNum();
     int getIrootBlockNum();
-    int getDataStartBlockNum();
+    int getDataStartBlockNum();       
     
 private:
     //path filesystem
@@ -45,7 +45,7 @@ private:
     //inode root block number
     int irootBlockNum;
     //alamat(block number) mulai block data
-    int dataStartBlockNum;
+    int dataStartBlockNum;    
 };
 
 #endif	/* FILESYSTEM_H */
