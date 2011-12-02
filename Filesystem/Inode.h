@@ -3,24 +3,28 @@
 
 class Inode {
 public:
-    static const int MAX_ADDRESS_COUNT = 8; 
-    //file attributes
-    //0 = file
-    //1 = directory
-    int type;
+    static const int MAX_ADDRESS_COUNT = 1022;    
     
-    //alamat block yang memuat data file ini
-    int dataaddress[];
-    
-    //alamat block yang memuat address block
-    int otheraddressblock;
-    
-    Inode();
+	int getType() {
+		return type;
+	}
+	
+    Inode(int blockaddress, Filesystem filesystem);
     Inode(const Inode& orig);
     virtual ~Inode();
     
 private:
-
+	//file attributes    
+    int type;
+	static const int FILE=0;
+	static const int DIR=1;
+	
+	//alamat block yang memuat data file ini
+    int dataaddress[];
+    
+    //alamat block yang memuat address block
+    int otheraddressblock;
+ 
 };
 
 #endif	/* INODE_H */
