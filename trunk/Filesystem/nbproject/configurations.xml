@@ -17,17 +17,17 @@
                    displayName="Resource Files"
                    projectFiles="true"
                    kind="SOURCE_LOGICAL_FOLDER">
+    </logicalFolder>
+    <logicalFolder name="SourceFiles"
+                   displayName="Source Files"
+                   projectFiles="true"
+                   kind="SOURCE_LOGICAL_FOLDER">
       <itemPath>Block.cpp</itemPath>
       <itemPath>ByteUtil.cpp</itemPath>
       <itemPath>File.cpp</itemPath>
       <itemPath>Filesystem.cpp</itemPath>
       <itemPath>Inode.cpp</itemPath>
       <itemPath>mountfs.cpp</itemPath>
-    </logicalFolder>
-    <logicalFolder name="SourceFiles"
-                   displayName="Source Files"
-                   projectFiles="true"
-                   kind="SOURCE_LOGICAL_FOLDER">
     </logicalFolder>
     <logicalFolder name="TestFiles"
                    displayName="Test Files"

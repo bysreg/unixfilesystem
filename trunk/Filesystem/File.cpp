@@ -11,6 +11,12 @@ File::File() {
 
 }
 
+File::File(string newName, string absPath, bool type) {
+    name = newName;
+    path = absPath;
+    isDir = type;
+}
+
 File::File(const File& orig) {
 
 }
@@ -29,4 +35,12 @@ string File::getName() {
 
 string File::getAbsoluteName() {
     return this->path.append(this->name);
+}
+
+void File::setName(string newName) {
+
+}
+
+void File::setDir(string absPath) {
+
 }
