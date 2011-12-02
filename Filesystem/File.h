@@ -15,7 +15,7 @@
 class File {
 public:
     File();
-    File(string newName, string absPath, bool type);
+    File(string newName, string absPath, bool type);    //type, true
     File(const File& orig);
     virtual ~File();
 
