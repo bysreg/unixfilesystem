@@ -21,11 +21,17 @@ public:
     //memformat device pada path(size dalam KB)
     static bool format(string path, unsigned int size);
     
-    //mengambil block pada urutan number dari filesystem
+    //mengambil block pada urutan number dari filesystem(alamat blok disimpan di dalam blok)
     bool getBlock(int number,Block *&block);
+    
+    //menulis block ke filesystem
+    bool writeBlock(const Block *block);
     
     //mengembalikan true jika blok pada number kosong
     bool isBlockEmpty(int number);
+    
+    //mengembalikan alamat blok kosong, mengembalikan -1 jika tidak ada
+    int getAdrEmptyBlock();
     
     int getSize();
     int getBlockCount();
