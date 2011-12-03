@@ -26,11 +26,10 @@ public:
     
     //membangun inode dan mengembalikan blok representasi inode tersebut, mengembalikan -1 jika tidak ada size
     static int consInode(Filesystem *fs, int type, vector<int> dataaddress, int otheraddressblock);
-    
-    void setType(int type);
-    void setDataAddress(int slot, int blockAddress);
-    void setOtherAddressBlock(int otherAddressBlock);
-    
+        
+//    void setDataAddress(int slot, int blockAddress);
+//    void setOtherAddressBlock(int otherAddressBlock);
+//    
 
 private:
     //file attributes    

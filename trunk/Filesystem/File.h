@@ -19,15 +19,15 @@ public:
     virtual ~File();
 
     /*********** GETTER ***********/
-    int getSize();              //get size for a file
-    string getName();           //get local name for a file
-    string getAbsoluteName();   //get absoulute name from root
-    File getParent();           //get parent's folder
-    byte getDataByte(int pos);
-    
+    int getSize() const;              //get size for a file
+    string getName() const;           //get local name for a file
+    //string getAbsoluteName();   //get absoulute name from root
+    int getParentInode() const;           //get alamat inode parent, mengembalikan -1 jika folder ini adalah root
+    byte getDataByte(int pos) const;
+    void getOtherData(vector<byte> *data, int addr, Filesystem fs);
+    int getType() const;
     /*********** SETTER ***********/
-    void setName(string newName);//set name for a new file/directory
-    void setDir(string absPath); //set directory for this file
+    void setName(string newName);//set name for a new file/directory    
 
     /*****************************/
     //mengembalikan alamat blok inode file tersebut, -1 jika disk penuh
@@ -39,6 +39,7 @@ protected:
     string name;    //file name    
     int type;     //type, whether it is a file or a directory
     vector<byte> data;
+    int iParent; // alamat inode parent
 private:
     
 };

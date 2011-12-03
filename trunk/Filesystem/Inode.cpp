@@ -44,9 +44,12 @@ int Inode::getType() const {
 }
 
 int Inode::getDataAddress(int slot) const {
-    if (dataaddress[slot] == 0) {//0 itu artinya tidak ada address(alamat 0 sudah pasti superblock)
+    if(slot>=MAX_ADDRESS_COUNT) {
         return -1;
     }
+    if (dataaddress[slot] == 0) {//0 itu artinya tidak ada address(alamat 0 sudah pasti superblock)
+        return -1;
+    }    
     return dataaddress[slot];
 }
 
@@ -99,6 +102,15 @@ int Inode::consInode(Filesystem *fs, int type, vector<int> dataaddress, int othe
         return -1;
     }
 }
+
+
+//void Inode::setDataAddress(int slot, int blockAddress) {
+//    dataaddress[slot] = blockAddress;
+//}
+//
+//void Inode::setOtherAddressBlock(int otherAddressBlock) {
+//    
+//}
 
 //int main() {
 //    printf("tes inode\n");
