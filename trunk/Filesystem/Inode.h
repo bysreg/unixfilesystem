@@ -22,7 +22,7 @@ public:
     int getOtherAddressBlock() const;
     
     //membangun inode dan mengembalikan blok representasi inode tersebut(BELUM DISAVE ke disk!)
-    static Block consInode(Filesystem fs, int type, const int *dataaddress, int otheraddressblock);
+    static Block consInode(Filesystem fs, int type, vector<int> dataaddress, int otheraddressblock);
     
     void setType(int type);
     void setDataAddress(int slot, int blockAddress);
