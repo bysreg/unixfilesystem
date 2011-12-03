@@ -8,6 +8,12 @@ Block::Block(int number,const byte *data):number(number) {
     }    
 }
 
+Block::Block(int number, const vector<byte> *data):number(number) {
+    for(int i=0;i<BLOCK_SIZE;i++) {
+        this->data[i] = (*data)[i];
+    }
+}
+
 Block::Block(const Block& orig):number(orig.number) {             
     for(int i=0;i<BLOCK_SIZE;i++) {
         data[i] = orig.data[i];       
