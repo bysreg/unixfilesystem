@@ -21,6 +21,8 @@ public:
     int getDataAddress(int slot) const;
     //mengambil address blok lain, mengembalikan -1 jika tidak ada address disitu 
     int getOtherAddressBlock() const;
+    //mengambil alamat inode ini
+    int getAddress() const;
     
     //membangun inode dan mengembalikan blok representasi inode tersebut(BELUM DISAVE ke disk!)
     static int consInode(Filesystem *fs, int type, vector<int> dataaddress, int otheraddressblock);
@@ -28,6 +30,7 @@ public:
     void setType(int type);
     void setDataAddress(int slot, int blockAddress);
     void setOtherAddressBlock(int otherAddressBlock);
+    
 
 private:
     //file attributes    
@@ -39,6 +42,8 @@ private:
     //alamat block yang memuat address block
     int otheraddressblock;
 
+    //alamat block inode ini
+    int address;
 };
 
 #endif	/* INODE_H */
