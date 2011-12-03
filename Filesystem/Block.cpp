@@ -18,8 +18,7 @@ Block::~Block() {
 }
 
 byte* Block::getBytes(int offset, int count) {
-    byte *ret = new byte[count];
-    printf("%d %d\n",offset,offset+count-1);
+    byte *ret = new byte[count];    
     for(int i=0;i<count;i++) {
         ret[i] = data[offset+i];     
     }    

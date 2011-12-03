@@ -1,5 +1,6 @@
 #include "Inode.h"
 #include <iostream>
+#include <cstdio>
 
 using namespace std;
 
@@ -82,10 +83,7 @@ int Inode::consInode(Filesystem *fs, int type, vector<int> dataaddress, int othe
             data[bytecount] = b_dataaddress[j];
             bytecount++;
         }
-    }    
-    for(int i=0;i<20;i++) {
-        printf("%d : %d\n",i,data[i]);
-    }
+    }        
 
     for (int i = bytecount; i < Block::BLOCK_SIZE; i++) {
         data[bytecount] = 0;
@@ -102,16 +100,16 @@ int Inode::consInode(Filesystem *fs, int type, vector<int> dataaddress, int othe
     }
 }
 
-int main() {
-    printf("tes inode\n");
-    cout<<"mount : "<<(Filesystem::format("device.txt",(unsigned int)1024))<<endl;  
-    Filesystem fs("device.txt"); 
-    vector<int> dataaddress;
-    dataaddress.push_back(999);
-    printf("tes buat inode : %d\n",Inode::consInode(&fs, Inode::DIR, dataaddress, 10));
-    //Filesystem::debug();        
-    Inode inode(3, fs);
-    printf("tipe : %d\n", inode.getType());
-    printf("alamat blok file pertama : %d\n", inode.getDataAddress(0));
-    printf("alamat blok yang memuat address blok : %d\n", inode.getOtherAddressBlock());    
-}
+//int main() {
+//    printf("tes inode\n");
+//    cout<<"mount : "<<(Filesystem::format("device.txt",(unsigned int)1024))<<endl;  
+//    Filesystem fs("device.txt"); 
+//    vector<int> dataaddress;
+//    dataaddress.push_back(999);
+//    printf("tes buat inode : %d\n",Inode::consInode(&fs, Inode::DIR, dataaddress, 10));
+//    //Filesystem::debug();        
+//    Inode inode(3, fs);
+//    printf("tipe : %d\n", inode.getType());
+//    printf("alamat blok file pertama : %d\n", inode.getDataAddress(0));
+//    printf("alamat blok yang memuat address blok : %d\n", inode.getOtherAddressBlock());    
+//}
