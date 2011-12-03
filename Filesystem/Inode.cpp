@@ -7,7 +7,9 @@ Inode::Inode(int blockaddress, Filesystem filesystem) {
     Block *block;
     byte* pbyte;
     filesystem.getBlock(blockaddress, block);
-
+    
+    this->address = blockaddress;
+    
     //ambil empat byte pertama untuk atribut file
     pbyte = (*block).getBytes(0, 4);
     type = ByteUtil::bytesToInt(pbyte);
@@ -19,13 +21,13 @@ Inode::Inode(int blockaddress, Filesystem filesystem) {
     //ambil tiap empat byte berikutnya untuk alamat blok file disimpan
     for(int i=0;i<MAX_ADDRESS_COUNT;i++) {
         pbyte = block->getBytes(i*4+8,4);        
-        dataaddress[i] = ByteUtil::bytesToInt(pbyte);
-        printf("data address ke-%d : %d\n",i,dataaddress[i]);
+        dataaddress[i] = ByteUtil::bytesToInt(pbyte);        
         delete[] pbyte;
     }
 }
 
 Inode::Inode(const Inode& orig) {
+    this->address = orig.getAddress();
     this->type = orig.getType();
     for (int i = 0; i < MAX_ADDRESS_COUNT; i++) {
         this->dataaddress[i] = orig.getDataAddress(i);
@@ -52,6 +54,10 @@ int Inode::getOtherAddressBlock() const {
         return -1;
     }
     return otheraddressblock;
+}
+
+int Inode::getAddress() const {
+    return this->address;
 }
 
 int Inode::consInode(Filesystem *fs, int type, vector<int> dataaddress, int otheraddressblock) {

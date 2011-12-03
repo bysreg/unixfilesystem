@@ -75,7 +75,7 @@ bool Filesystem::format(string path, unsigned int size) {
             fout<<(byte)0;
         }
     }
-    
+        
     //blok ke ceil(nblock/Block::BLOCK_SIZE) + 1 untuk inode root
     for(int i=0;i<Block::BLOCK_SIZE;i++) {
         fout<<(byte)0;        
