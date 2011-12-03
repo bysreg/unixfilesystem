@@ -111,7 +111,12 @@ bool Filesystem::writeBlock(const Block *block) {
     }
     fout.seekp(Block::BLOCK_SIZE*(block->number),ios::beg);    
     fout.write((char*)block->data,Block::BLOCK_SIZE);
+    int bnumber = (block->number/Block::BLOCK_SIZE)+1;//blok bitmap blok number tersebut berada
+    fout.seekp(Block::BLOCK_SIZE*bnumber+(block->number%Block::BLOCK_SIZE),ios::beg);        
+    byte test = 1;
+    fout.write((char *)&test,1);
     fout.close();
+    
     return true;
 }
 
@@ -139,8 +144,7 @@ bool Filesystem::isBlockEmpty(int number) {
     ifstream fin(path,ios::in | ios::binary);
     if(!fin.is_open() || number<0) {
         return false;
-    }
-    byte data[Block::BLOCK_SIZE];
+    }    
     int bnumber = (number/Block::BLOCK_SIZE)+1;//blok bitmap blok number tersebut berada
     fin.seekg(Block::BLOCK_SIZE*bnumber+(number%Block::BLOCK_SIZE),ios::beg);        
     byte test;
@@ -162,6 +166,28 @@ int Filesystem::getAdrEmptyBlock() {
         for(int i=0;i<nblock;i++) {            
             if((*block).getByte(i)==0) {//jika blok tersebut kosong                
                 return (i+((nb-1)*Block::BLOCK_SIZE));
+            }
+            count++;
+        }
+    }
+    return -1;
+}
+
+int Filesystem::getAdrSecondEmptyBlock() {
+    int bitmapblocknum=1;
+    bool foundfirst=false;
+    int count=0;
+    Block *block;
+    //ambil blok pertama bitmap
+    getBlock(bitmapblocknum,block);
+    for(int nb=bitmapblocknum;nb<irootBlockNum;nb++) {
+        for(int i=0;i<nblock;i++) {            
+            if((*block).getByte(i)==0) {//jika blok tersebut kosong                
+                if(foundfirst==false) {//jika belom ketemu yang pertama
+                    foundfirst=true;
+                }else{
+                    return (i+((nb-1)*Block::BLOCK_SIZE));
+                }                
             }
             count++;
         }
@@ -196,10 +222,10 @@ char* Filesystem::getPath() const {
 //    //cek getAdrEmptyBlock() 
 //    printf("alamat blok kosong mana : %d\n",fs.getAdrEmptyBlock());
 //    
-//    printf("tulis 4096 blok pertama filesystem sebagai sudah terisi di bitmap...\n");
+//    printf("tulis 4096 byte di blok ketiga filesystem sebagai sudah terisi di bitmap...\n");
 //    //cek writeblock()
 //    Block *block;
-//    fs.getBlock(1,block);
+//    fs.getBlock(3,block);
 //    for(int i=0;i<Block::BLOCK_SIZE;i++) {
 //        block->data[i]=1;
 //    }

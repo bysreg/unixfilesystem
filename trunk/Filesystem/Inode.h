@@ -17,14 +17,14 @@ public:
     
     //mengambil tipe inode tersebut
     int getType() const ;
-    //mengambil data address blok pada slot, mengembalikan -1 jika tidak ada address disitu
+    //mengambil data address blok pada slot, mengembalikan -1 jika tidak ada address disitu atau melebihi slot maksimum
     int getDataAddress(int slot) const;
     //mengambil address blok lain, mengembalikan -1 jika tidak ada address disitu 
     int getOtherAddressBlock() const;
     //mengambil alamat inode ini
     int getAddress() const;
     
-    //membangun inode dan mengembalikan blok representasi inode tersebut(BELUM DISAVE ke disk!)
+    //membangun inode dan mengembalikan blok representasi inode tersebut, mengembalikan -1 jika tidak ada size
     static int consInode(Filesystem *fs, int type, vector<int> dataaddress, int otheraddressblock);
     
     void setType(int type);

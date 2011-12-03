@@ -33,6 +33,9 @@ public:
     //mengembalikan alamat blok kosong, mengembalikan -1 jika tidak ada
     int getAdrEmptyBlock();
     
+    //mengembalikan alamat blok kosong kedua, mengembalikan -1 jika tidak ada
+    int getAdrSecondEmptyBlock();
+    
     //mengembalikan jalan
     char* getPath() const;
     
