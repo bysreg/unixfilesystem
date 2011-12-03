@@ -30,21 +30,24 @@ void mountfs::mount(string path) {
     cout<< "size = " << fs.getSize();
 }
 
+/*
 int main(int argc, char** argv) {
-    /*** USER ACTIVITY MODE - WILL BE DELETED ***/
+    
     string path;
     cout<<  "Enter filesystem path: ";
     cin>>   path;
-    /********************************************/
-//    if (argc != 3) {
-//        cout << "mounting failed, wrong params";
-//        exit(0);
-//    }
-//    path = argv[1];
-//    string mountpt = argv[2];
+   
+    
+    if (argc != 3) {
+        cout << "mounting failed, wrong params";
+        exit(0);
+    }
+    path = argv[1];
+    string mountpt = argv[2];
 
-    /********************************************/
+    
     mountfs::mount(path);
     
     return 0;
 }
+*/

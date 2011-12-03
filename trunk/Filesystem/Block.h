@@ -6,33 +6,24 @@
 class Block {
 public:
     //size satu blok(dalam byte)
-    static const int BLOCK_SIZE = 4096;    
+    static const int BLOCK_SIZE = 4096;   
     
-    Block(int number,byte *data);
+    //sengaja memang bisa langsung diubah di luar kelas(publik)
+    byte data[BLOCK_SIZE];    
+    const int number;//alamat blok ini
+    
+    Block(int number,const byte *data);
     Block(const Block& orig);
     virtual ~Block();
     
-    //mengembalikan seluruh byte data yang tersimpan dalam blok ini
-    byte* readBlock();
-    
     //mengambil hanya byte pada blok ini yang terletak pada posisi offset sebanyak
     //count byte
-    byte* readBlock(int offset, int count);
-    
-    //menulis sejumlah count byte src ke dalam blok(asumsi count tidak melebihi BLOCK_SIZE)
-    //TODO : belum dites
-    void writeBlock(const char *src, int count);    
-    
-    //menulis array byte src mulai dari index idx(index byte blok paling kecil adalah 0)
-    //TODO : belum dites
-    void writeBlock(const char *src, int count, int idx);
-    
+    byte* getBytes(int offset, int count);
+
     //mengambil satu byte pada posisi pos pada blok ini
-    byte getByte(int pos);  
+    byte getByte(int pos) const ;  
     
-private:
-    byte data[BLOCK_SIZE];    
-    const int number;
+private:    
 };
 
 #endif
