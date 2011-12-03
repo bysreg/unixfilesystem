@@ -33,13 +33,18 @@ public:
     //mengembalikan alamat blok kosong, mengembalikan -1 jika tidak ada
     int getAdrEmptyBlock();
     
-    int getSize();
-    int getBlockCount();
-    int getBitmapStartBlockNum();
-    int getIrootBlockNum();
-    int getDataStartBlockNum();       
+    //mengembalikan jalan
+    char* getPath() const;
     
-private:
+    int getSize() const ;
+    int getBlockCount() const ;
+    int getBitmapStartBlockNum() const;
+    int getIrootBlockNum() const ;
+    int getDataStartBlockNum() const ;       
+    
+    static void debug();
+private:    
+    
     //path filesystem
     char *path;
     //size filesystem

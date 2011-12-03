@@ -10,6 +10,7 @@ public:
     static const int FILE = 0;
     static const int DIR = 1;
     
+    //membuat objek inode dari alamat blok pada filesystem
     Inode(int blockaddress, Filesystem filesystem);
     Inode(const Inode& orig);
     virtual ~Inode();
@@ -22,7 +23,7 @@ public:
     int getOtherAddressBlock() const;
     
     //membangun inode dan mengembalikan blok representasi inode tersebut(BELUM DISAVE ke disk!)
-    static Block consInode(Filesystem fs, int type, vector<int> dataaddress, int otheraddressblock);
+    static int consInode(Filesystem *fs, int type, vector<int> dataaddress, int otheraddressblock);
     
     void setType(int type);
     void setDataAddress(int slot, int blockAddress);
