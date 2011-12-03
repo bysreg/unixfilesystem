@@ -159,6 +159,7 @@ int Filesystem::getAdrEmptyBlock() {
 
 void debug();
 
+
 int main() {
     //tes format
     cout<<(Filesystem::format("device.txt",(unsigned int)1024*17))<<endl;         
@@ -180,7 +181,7 @@ int main() {
     printf("apakah blok 6 kosong? : %d(0==false 1==true)\n" ,fs.isBlockEmpty(6));
     
     //cek getAdrEmptyBlock() 
-    printf("alamat blok kosong mana : %d",fs.getAdrEmptyBlock());
+    printf("alamat blok kosong mana : %d\n",fs.getAdrEmptyBlock());
     
     printf("tulis 4096 blok pertama filesystem sudah terisi di bitmap...\n");
     //cek writeblock()

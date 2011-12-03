@@ -49,33 +49,40 @@ int Inode::getOtherAddressBlock() const {
     return otheraddressblock;
 }
 
-Block Inode::consInode(Filesystem fs, int type, const int* dataaddress, int otheraddressblock) {
+Block Inode::consInode(Filesystem fs, int type, vector<int> dataaddress, int otheraddressblock) {
     int bytecount=0;
     byte data[Block::BLOCK_SIZE];
     vector<byte> b_type = ByteUtil::intToBytes(type);
     //tulis empat byte pertama untuk atribut file
     for(int i=0;i<b_type.size();i++) {
         data[bytecount] = b_type[i];
+        bytecount++;
     }
     //tulis empat byte kedua untuk alamat address blok lain
     vector<byte> b_otheraddressblock = ByteUtil::intToBytes(otheraddressblock);
     for(int i=0;i<b_otheraddressblock.size();i++) {
         data[bytecount] = b_otheraddressblock[i];
+        bytecount++;
     }
-    //tulis empat byte ketiga dan seterusnya untuk alamat blok file disimpan(1022 alamat)
-    for(int i=0;i<MAX_ADDRESS_COUNT;i++) {
-        vector<byte> b_dataaddress = ByteUtil::intToBytes(dataaddress[i]);
+    //tulis empat byte ketiga dan seterusnya untuk alamat blok file disimpan(sebanyak dataaddress)
+    for(int i=0;i<dataaddress.size();i++) {        
+        vector<byte> b_dataaddress = ByteUtil::intToBytes(dataaddress[i]);        
         for(int j=0;j<b_dataaddress.size();j++) {
             data[bytecount] = b_dataaddress[j];
+            bytecount++;
         }
     }
+    for(int i=bytecount;i<Block::BLOCK_SIZE;i++) {
+        data[bytecount] = 0;
+        bytecount++;
+    }
+    
     Block block(fs.getAdrEmptyBlock(),data);
     return block;
 }
 
 /*
 int main() {
-    
+    Inode::consInode();
 }
- * 
- */
+*/
