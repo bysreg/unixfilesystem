@@ -1,4 +1,5 @@
 #include "Filesystem.h"
+#include "File.h"
 #include <fstream>
 #include <iostream>
 
@@ -63,8 +64,8 @@ bool Filesystem::format(string path, unsigned int size) {
     
     //tulis bitmap di blok ke 1 sampai ceil(nblock/Block::BLOCK_SIZE);
     for(int i=0;i<nblock;i++) {        
-        if(i<=BitmapEndBlockNumber+1) {            
-            fout<<(byte)1;//blok superblock,bitmap,inode root sudah diisi
+        if(i<=BitmapEndBlockNumber) {            
+            fout<<(byte)1;//blok superblock,bitmap
         }else{
             fout<<(byte)0;
         }
@@ -87,6 +88,10 @@ bool Filesystem::format(string path, unsigned int size) {
     }
         
     fout.close();
+    //buka lagi untuk mkdir root
+    Filesystem fs(path);
+    File::mkdir(path,fs,0);
+    //buat folder root    
     return true;
 }
 
@@ -201,7 +206,7 @@ char* Filesystem::getPath() const {
 
 //int main() {
 //    //tes format
-//    cout<<(Filesystem::format("device.txt",(unsigned int)1024))<<endl;         
+//    cout<<(Filesystem::format("device.txt",(unsigned int)1024*17))<<endl;         
 //    
 //    //tes mount
 //    Filesystem fs("device.txt");
@@ -230,7 +235,7 @@ char* Filesystem::getPath() const {
 //        block->data[i]=1;
 //    }
 //    fs.writeBlock(block);
-//    Filesystem::debug();
+//    //Filesystem::debug();
 //    delete block;
 //    
 //    //cek getAdrEmptyBlock() 
