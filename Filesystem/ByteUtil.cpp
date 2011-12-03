@@ -1,8 +1,8 @@
 #include "ByteUtil.h"
 #include <iostream>
 using namespace std;
-vector<byte> ByteUtil::intToBytes(int val) {
-     vector<unsigned char> arrbytes(4);
+vector<byte> ByteUtil::intToBytes(unsigned int val) {
+     vector<byte> arrbytes(4);
      for (int i = 0; i < 4; i++)
          arrbytes[3 - i] = (val >> (i * 8));
      return arrbytes;

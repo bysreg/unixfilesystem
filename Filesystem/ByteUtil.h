@@ -10,7 +10,7 @@ class ByteUtil {
 public:
     
     //mengembalikan representasi val dalam array of bytes(big endian)
-    static vector<byte> intToBytes(int val);
+    static vector<byte> intToBytes(unsigned int val);
     
     //mengembalikan representasi val(big endian 4 byte) dalam integer
     static int bytesToInt(const vector<byte> val);
