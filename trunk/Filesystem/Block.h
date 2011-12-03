@@ -1,4 +1,7 @@
 #include "byte.h"
+#include <vector>
+
+using namespace std;
 
 #ifndef BLOCK_H
 #define	BLOCK_H
@@ -13,6 +16,7 @@ public:
     const int number;//alamat blok ini
     
     Block(int number,const byte *data);
+    Block(int number,const vector<byte> *data);
     Block(const Block& orig);
     virtual ~Block();
     
