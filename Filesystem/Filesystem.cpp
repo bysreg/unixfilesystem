@@ -116,12 +116,25 @@ bool Filesystem::writeBlock(const Block *block) {
     }
     fout.seekp(Block::BLOCK_SIZE*(block->number),ios::beg);    
     fout.write((char*)block->data,Block::BLOCK_SIZE);
+    //nyatet di bitmap blok itu sudah terisi
     int bnumber = (block->number/Block::BLOCK_SIZE)+1;//blok bitmap blok number tersebut berada
     fout.seekp(Block::BLOCK_SIZE*bnumber+(block->number%Block::BLOCK_SIZE),ios::beg);        
     byte test = 1;
     fout.write((char *)&test,1);
-    fout.close();
-    
+    fout.close();    
+    return true;
+}
+
+bool Filesystem::deleteBlock(int number) {
+    ofstream fout(path,ios::in | ios::binary);    
+    if(!fout.is_open()) {
+        return false;
+    }
+    //nyatet di bitmap blok itu sudah terisi
+    int bnumber = (number/Block::BLOCK_SIZE)+1;//blok bitmap blok number tersebut berada
+    fout.seekp(Block::BLOCK_SIZE*bnumber+(number%Block::BLOCK_SIZE),ios::beg);        
+    byte test = 0;
+    fout.write((char *)&test,1);
     return true;
 }
 

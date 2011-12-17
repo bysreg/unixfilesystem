@@ -19,17 +19,15 @@ public:
     int getType() const ;
     //mengambil data address blok pada slot, mengembalikan -1 jika tidak ada address disitu atau melebihi slot maksimum
     int getDataAddress(int slot) const;
-    //mengambil address blok lain, mengembalikan -1 jika tidak ada address disitu 
-    int getOtherAddressBlock() const;
+    //mengambil file size(direktori selalu mengembalikan 0)
+    int getFileSize() const;
     //mengambil alamat inode ini
     int getAddress() const;
     
     //membangun inode dan mengembalikan blok representasi inode tersebut, mengembalikan -1 jika tidak ada size
-    static int consInode(Filesystem *fs, int type, vector<int> dataaddress, int otheraddressblock);
+    static int consInode(Filesystem *fs, int type, vector<int> dataaddress, int argfilesize);
         
 //    void setDataAddress(int slot, int blockAddress);
-//    void setOtherAddressBlock(int otherAddressBlock);
-//    
 
 private:
     //file attributes    
@@ -38,8 +36,8 @@ private:
     //alamat block yang memuat data file ini
     int dataaddress[MAX_ADDRESS_COUNT];
 
-    //alamat block yang memuat address block
-    int otheraddressblock;
+    //file size suatu file
+    int filesize;
 
     //alamat block inode ini
     int address;

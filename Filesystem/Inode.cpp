@@ -15,9 +15,9 @@ Inode::Inode(int blockaddress, Filesystem filesystem) {
     pbyte = (*block).getBytes(0, 4);
     type = ByteUtil::bytesToInt(pbyte);
     delete[] pbyte;
-    //ambil empat byte kedua untuk alamat address blok lain
+    //ambil empat byte kedua untuk filesize
     pbyte = block->getBytes(4, 4);
-    otheraddressblock = ByteUtil::bytesToInt(pbyte);
+    filesize = ByteUtil::bytesToInt(pbyte);
     delete[] pbyte;
     //ambil tiap empat byte berikutnya untuk alamat blok file disimpan
     for(int i=0;i<MAX_ADDRESS_COUNT;i++) {
@@ -33,7 +33,7 @@ Inode::Inode(const Inode& orig) {
     for (int i = 0; i < MAX_ADDRESS_COUNT; i++) {
         this->dataaddress[i] = orig.getDataAddress(i);
     }
-    this->otheraddressblock = orig.getOtherAddressBlock();
+    this->filesize = orig.getFileSize();
 }
 
 Inode::~Inode() {
@@ -53,18 +53,18 @@ int Inode::getDataAddress(int slot) const {
     return dataaddress[slot];
 }
 
-int Inode::getOtherAddressBlock() const {
-    if (otheraddressblock == 0) {
+int Inode::getFileSize() const {
+    if (filesize == 0) {
         return -1;
     }
-    return otheraddressblock;
+    return filesize;
 }
 
 int Inode::getAddress() const {
     return this->address;
 }
 
-int Inode::consInode(Filesystem *fs, int type, vector<int> dataaddress, int otheraddressblock) {
+int Inode::consInode(Filesystem *fs, int type, vector<int> dataaddress, int argfilesize) {
     int bytecount = 0;
     byte data[Block::BLOCK_SIZE];
     vector<byte> b_type = ByteUtil::intToBytes(type);
@@ -74,7 +74,7 @@ int Inode::consInode(Filesystem *fs, int type, vector<int> dataaddress, int othe
         bytecount++;
     }
     //tulis empat byte kedua untuk alamat address blok lain
-    vector<byte> b_otheraddressblock = ByteUtil::intToBytes(otheraddressblock);
+    vector<byte> b_otheraddressblock = ByteUtil::intToBytes(argfilesize);
     for (int i = 0; i < b_otheraddressblock.size(); i++) {
         data[bytecount] = b_otheraddressblock[i];
         bytecount++;
@@ -108,9 +108,6 @@ int Inode::consInode(Filesystem *fs, int type, vector<int> dataaddress, int othe
 //    dataaddress[slot] = blockAddress;
 //}
 //
-//void Inode::setOtherAddressBlock(int otherAddressBlock) {
-//    
-//}
 
 //int main() {
 //    printf("tes inode\n");
