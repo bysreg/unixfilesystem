@@ -20,27 +20,34 @@ public:
 
     /*********** GETTER ***********/
     int getSize() const;              //get size for a file
-    string getName() const;           //get local name for a file
-    //string getAbsoluteName();   //get absoulute name from root
-    int getParentInode() const;           //get alamat inode parent, mengembalikan 0 jika folder ini adalah root
+    string getName() const;           //get local name for a file   
+    //get alamat inode parent, mengembalikan 0 jika folder ini adalah root atau ini adalah file bukan folder
+    int getParentInode() const;          
     byte getDataByte(int pos) const;
-    void getOtherData(vector<byte> *data, int addr, Filesystem fs);
+    vector<byte> getData() const;     
     int getType() const;
-    int getAddress(int slot) const;//hanya untuk dir
+    int getAddress(int slot) const;//hanya untuk DIR
     //tambah alamat file selain diri sendiri dan parent
-    void addAddress(int val,Filesystem fs);//hanya untuk dir
-    /*********** SETTER ***********/
-    void setName(string newName);//set name for a new file/directory    
+    void addAddress(int val,Filesystem fs);//hanya untuk DIR  
 
     /*****************************/
     //mengembalikan alamat blok inode file tersebut, -1 jika disk penuh
-    static int mkdir(string name, Filesystem fs, int iparentaddr);    
+    static int mkdir(string name, Filesystem fs, int iparentaddr);   
+    static int mkfile(string name, Filesystem fs, int iparentaddr, byte* argdata, int argdatalen);
     //tampilin folder dan file yang berada di bawah dir
     static vector<string> ls(int iDir, Filesystem fs);
     //menampilkan working directory
     static string pwd(int iDir, Filesystem fs);
-    //mengembalikan inode direktori name pada direktori iDir, mengemnbalikan -1 jika tidak ada
+    //mengembalikan inode direktori name pada direktori iDir, mengembalikan -1 jika tidak ada atau bukan folder
     static int cd(int iDir, string name, Filesystem fs);
+    //membuka file dan mengembalikan isi file pada alamat inode tesebut
+    static vector<byte> cat(int inode, Filesystem fs);
+    //mengambil inode file pada path tersebut(direktori maupun file), mengembalikan -1 jika tidak ada
+    static int getInodeFromPath(string filepath, int curDirInode, Filesystem fs);
+    //menyalin file dari filesystem sistem operasi ke virtual filesystem    
+    static bool cp(string pathfile, int iDir, Filesystem fs);       
+    //menyalin file dari virtual filesystem ke virtual filesystem
+    static bool cp(int iFile, int iDir, Filesystem fs);
     //menghapus folder name jika ada
     static int rm(int iDir, string name, Filesystem fs);
     

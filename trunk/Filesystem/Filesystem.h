@@ -27,6 +27,9 @@ public:
     //menulis block ke filesystem
     bool writeBlock(const Block *block);
     
+    //menghapus block di filesystem di blok number tersebut
+    bool deleteBlock(int number);
+    
     //mengembalikan true jika blok pada number kosong
     bool isBlockEmpty(int number);
     
