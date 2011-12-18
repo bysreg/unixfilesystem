@@ -527,5 +527,13 @@ int main() {
     for (int i = 0; i < retLs.size(); i++) {
         cout << "dir " << i << " : " << retLs[i] << endl;
     }
+    printf("isi haha : \n");
+    retcat = File::cat(File::getInodeFromPath("haha",d,fs),fs);
+    for (int i = 0; i < retcat.size(); i++) {
+        if (i % 4 == 0) {//print 4 byte tiap baris
+            cout << endl << i << ". ";
+        }
+        cout << (char) retcat[i] << " ";
+    }
     return 0;
 }
