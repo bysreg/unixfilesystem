@@ -8,7 +8,7 @@ class Inode {
 public:
     static const int MAX_ADDRESS_COUNT = 1022;
     static const int FILE = 0;
-    static const int DIR = 1;
+    static const int DIR = 1;    
     
     //membuat objek inode dari alamat blok pada filesystem
     Inode(int blockaddress, Filesystem filesystem);

@@ -130,7 +130,7 @@ bool Filesystem::deleteBlock(int number) {
     if(!fout.is_open()) {
         return false;
     }
-    //nyatet di bitmap blok itu sudah terisi
+    //nyatet di bitmap blok itu kosong
     int bnumber = (number/Block::BLOCK_SIZE)+1;//blok bitmap blok number tersebut berada
     fout.seekp(Block::BLOCK_SIZE*bnumber+(number%Block::BLOCK_SIZE),ios::beg);        
     byte test = 0;
@@ -317,7 +317,17 @@ char* Filesystem::getPath() const {
 //    printf("jumlah blok kosong : %d\n", fs.getEmptyBlockCount());
 //    
 //    //cek isThereNEmptyBlock() 
-//    printf("cek apakah ada 11898 blok kosong : %d\n", fs.isThereNEmptyBlock(11898));
+//    printf("cek apakah ada 11906 blok kosong : %d\n", fs.isThereNEmptyBlock(11906));
+//    
+//    //cek deleteBlock()
+//    printf("\ndelete blok ke - 8:\n");
+//    fs.deleteBlock(9);
+//    
+//    //cek getAdrEmptyBlock() 
+//    printf("cek lagi blok kosong mana : %d\n",fs.getAdrEmptyBlock());
+//    
+//    //cek getAdrSecondEmptyBlock()
+//    printf("cek lagi blok kosong kedua mana : %d\n",fs.getAdrSecondEmptyBlock());
 //    
 //    return 0;
 //}
