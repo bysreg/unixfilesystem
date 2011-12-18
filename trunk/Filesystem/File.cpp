@@ -324,14 +324,18 @@ int File::getInodeFromPath(string filepath, int curDirInode, Filesystem fs) {
             }
             dirlist.push_back(filepath.substr(awal, j));
         }
-    }
-    for (int i = 0; i < dirlist.size(); i++) {        
-        if ((iaddress = cd(ret, dirlist[i], fs)) == -1) {
+    }    
+    for (int i = 0; i < dirlist.size(); i++) {            
+        if ((iaddress = cd(ret, dirlist[i], fs)) == -1) {            
             //mungkin yang ditunjuk oleh ret adalah file(cd hanya bisa ganti folder)
             File dir(ret,fs);
             int slot=0,addr=0;
-            while (true) {                
-                addr = dir.getAddress(slot);
+            while (true) { 
+                if (curDirInode == fs.getIrootBlockNum() && slot == 1) {
+                    slot++;
+                    continue;
+                }
+                addr = dir.getAddress(slot);                
                 if (addr != 0) {
                     File file(addr, fs);
                     if (file.getName() == dirlist[i] && file.getType() == Inode::FILE) {
@@ -388,6 +392,17 @@ bool File::cp(string pathfile, int iDestDir, Filesystem fs) {
     if(iserr==-1) {
         return false;
     }
+    return true;
+}
+
+bool File::cp(int iFile, int iDir, Filesystem fs) {
+    if(iFile<=0 && iDir<=0) {
+        return false;
+    }
+    
+    File source(iFile,fs);    
+    
+    File::mkfile(source.getName(),fs,iDir,&(source.getData()[0]),source.getSize());
     return true;
 }
 
@@ -562,5 +577,17 @@ int main() {
         cout << "dir " << i << " : " << retLs[i] << endl;
     }
     printf("alamat inode nya  : %d\n",File::getInodeFromPath("beginning_linux_programming_2nd_edition.pdf",5,fs));
+    
+    printf("\ntesting cp dari virtual fs ke dirinya sendiri cuman beda folder");
+    bool ea = File::cp(File::getInodeFromPath("beginning_linux_programming_2nd_edition.pdf",5,fs),fs.getIrootBlockNum(),fs);
+    printf("\ncopy berhasil ? : %d\n",ea);
+    printf("dir /usr/ea/uhuy/hilman/beyri sekarang : \n");
+    retLs = File::ls(fs.getIrootBlockNum(), fs);
+    for (int i = 0; i < retLs.size(); i++) {
+        cout << "dir " << i << " : " << retLs[i] << endl;
+    }
+    printf("hasil copy %d \n",File::getInodeFromPath("beginning_linux_programming_2nd_edition.pdf",fs.getIrootBlockNum(),fs));
+    
+    
     return 0;
 }
