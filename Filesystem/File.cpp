@@ -4,6 +4,7 @@
 #include <fstream>
 #include <cstdio>
 #include <cmath>
+#include <sys/stat.h>
 
 using namespace std;
 
@@ -402,7 +403,38 @@ bool File::cp(int iFile, int iDir, Filesystem fs) {
     
     File source(iFile,fs);    
     
-    File::mkfile(source.getName(),fs,iDir,&(source.getData()[0]),source.getSize());
+    int iserr = File::mkfile(source.getName(),fs,iDir,&(source.getData()[0]),source.getSize());
+    if(iserr==-1) {
+        return false;
+    }
+    return true;
+}
+
+bool File::cp(int iFile, string dirDest, Filesystem fs) {
+    if(iFile<=0) {
+        return false;
+    }
+    
+    int status;
+    struct stat st_buf;
+    
+    //cek apakah pathfile adalah folder(jika bukan, return false)
+    status = stat(dirDest.c_str(), &st_buf);
+    if(status!=0) {
+        return false;//error
+    }
+    
+    if(!S_ISDIR(st_buf.st_mode)) {
+        return false;//error
+    }
+    
+    //buka file yang ingin dicopy
+    File source(iFile,fs);
+    //buka folder tujuan copy
+    string destpathfile = dirDest + "/" + source.getName();
+    ofstream fout(destpathfile.c_str(),ios::binary);   
+    fout.write((char*)(&(source.getData()[0])),source.getSize());
+    fout.close();
     return true;
 }
 
@@ -588,6 +620,7 @@ int main() {
     }
     printf("hasil copy %d \n",File::getInodeFromPath("beginning_linux_programming_2nd_edition.pdf",fs.getIrootBlockNum(),fs));
     
-    
+    printf("\ntesting cp dari virtual fs ke luar fs(ke OS asli)");
+    File::cp(File::getInodeFromPath("beginning_linux_programming_2nd_edition.pdf",fs.getIrootBlockNum(),fs),"..",fs);
     return 0;
 }
