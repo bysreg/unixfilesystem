@@ -11,6 +11,8 @@
 
 class File {    
 public:    
+    static const int MARK_RECYCLE=1;//alamat blok 1 tidak akan pernah dipakai(JANGAN DIGANTI DENGAN ANGKA 0)
+    
     int inodeAddr;
     /********** CONSTRUCTOR *******/
     File(int inodeAddr, Filesystem fs);
@@ -32,6 +34,9 @@ public:
     int getAddress(int slot) const;
     //tambah alamat file selain diri sendiri dan parent
     void addAddress(int val,Filesystem fs);//hanya untuk DIR  
+    //menghapus alamat file selain diri sendiri dan parent(dengan cara memberi alamat
+    //MARK_RECYCLE slot)
+    void delAddress(int slot, Filesystem fs);//hanya untuk DIR
 
     /*****************************/
     //mengembalikan alamat blok inode file tersebut, -1 jika disk penuh
@@ -48,15 +53,16 @@ public:
     static vector<byte> cat(int inode, Filesystem fs);
     //mengambil inode file pada path tersebut(direktori maupun file), mengembalikan -1 jika tidak ada
     static int getInodeFromPath(string filepath, int curDirInode, Filesystem fs);
-    //menyalin file dari filesystem sistem operasi ke virtual filesystem    
+    //menyalin file dari filesystem sistem operasi ke virtual filesystem(BARU FILE)    
     static bool cp(string pathfile, int iDir, Filesystem fs);       
-    //menyalin file dari virtual filesystem ke virtual filesystem
+    //menyalin file dari virtual filesystem ke virtual filesystem(BARU FILE)
     static bool cp(int iFile, int iDir, Filesystem fs);
     //menyalin file dari virtual filesystem ke filesystem sistem operasi
-    //mengembalikan nilai false jika pathfile bukan folder
+    //mengembalikan nilai false jika pathfile bukan folder(BARU FILE)
     static bool cp(int iFile, string pathfile, Filesystem fs);
     //menghapus folder name jika ada(FIXME : BELUM SELESAI)
-    static int rm(int iDir, string name, Filesystem fs);
+    //mengembalikan false jika gagal
+    static bool rm(int iDir, int parDir, Filesystem fs);
     
     
 protected:
