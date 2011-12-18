@@ -60,9 +60,9 @@ public:
     //menyalin file dari virtual filesystem ke filesystem sistem operasi
     //mengembalikan nilai false jika pathfile bukan folder(BARU FILE)
     static bool cp(int iFile, string pathfile, Filesystem fs);
-    //menghapus folder name jika ada(FIXME : BELUM SELESAI)
+    //menghapus file iFile yang ada pada curDir(current) jika ada
     //mengembalikan false jika gagal
-    static bool rm(int iDir, int parDir, Filesystem fs);
+    static bool rm(int iFile, int curDir, Filesystem fs);
     
     
 protected:
