@@ -12,7 +12,7 @@ using namespace std;
 class Filesystem {
 public:    
     //size maksimum filesystem(dalam KB)
-    static const int MAX_SIZE=65535;    
+    static const int MAX_SIZE=65536;    
         
     Filesystem(string path);
     Filesystem(const Filesystem& orig);    
@@ -38,6 +38,12 @@ public:
     
     //mengembalikan alamat blok kosong kedua, mengembalikan -1 jika tidak ada
     int getAdrSecondEmptyBlock();
+    
+    //mengembalikan true jika terdapat N blok kosong
+    bool isThereNEmptyBlock(int n);
+    
+    //mengembalikan jumlah blok kosong filesystem
+    int getEmptyBlockCount();
     
     //mengembalikan jalan
     char* getPath() const;
