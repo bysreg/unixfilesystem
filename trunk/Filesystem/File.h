@@ -53,8 +53,9 @@ public:
     //menyalin file dari virtual filesystem ke virtual filesystem
     static bool cp(int iFile, int iDir, Filesystem fs);
     //menyalin file dari virtual filesystem ke filesystem sistem operasi
+    //mengembalikan nilai false jika pathfile bukan folder
     static bool cp(int iFile, string pathfile, Filesystem fs);
-    //menghapus folder name jika ada
+    //menghapus folder name jika ada(FIXME : BELUM SELESAI)
     static int rm(int iDir, string name, Filesystem fs);
     
     
