@@ -26,7 +26,10 @@ public:
     byte getDataByte(int pos) const;
     vector<byte> getData() const;     
     int getType() const;
-    int getAddress(int slot) const;//hanya untuk DIR
+    //hanya untuk DIR
+    //slot 0 menunjuk pada diri sendiri
+    //slot 1 menunjuk pada parent(pada root menghasilkan angka 0, HATI-HATI!)
+    int getAddress(int slot) const;
     //tambah alamat file selain diri sendiri dan parent
     void addAddress(int val,Filesystem fs);//hanya untuk DIR  
 
@@ -49,6 +52,8 @@ public:
     static bool cp(string pathfile, int iDir, Filesystem fs);       
     //menyalin file dari virtual filesystem ke virtual filesystem
     static bool cp(int iFile, int iDir, Filesystem fs);
+    //menyalin file dari virtual filesystem ke filesystem sistem operasi
+    static bool cp(int iFile, string pathfile, Filesystem fs);
     //menghapus folder name jika ada
     static int rm(int iDir, string name, Filesystem fs);
     
