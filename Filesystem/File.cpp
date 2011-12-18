@@ -269,6 +269,9 @@ string File::pwd(int iDir, Filesystem fs) {
 }
 
 int File::cd(int iDirAddr, string name, Filesystem fs) {
+    if(iDirAddr<=0 || iDirAddr==MARK_RECYCLE) {
+        return -1;
+    }
     //akses inode iDir    
     File dir(iDirAddr, fs);
     if(dir.getType()==Inode::FILE) {//cek iDirAddrnya apakah file
@@ -327,8 +330,8 @@ int File::getInodeFromPath(string filepath, int curDirInode, Filesystem fs) {
             dirlist.push_back(filepath.substr(awal, j));
         }
     }    
-    for (int i = 0; i < dirlist.size(); i++) {            
-        if ((iaddress = cd(ret, dirlist[i], fs)) == -1) {            
+    for (int i = 0; i < dirlist.size(); i++) {                    
+        if ((iaddress = cd(ret, dirlist[i], fs)) == -1) {                        
             //mungkin yang ditunjuk oleh ret adalah file(cd hanya bisa ganti folder)
             File dir(ret,fs);            
             int slot=0,addr=0;
@@ -336,21 +339,21 @@ int File::getInodeFromPath(string filepath, int curDirInode, Filesystem fs) {
                 if (curDirInode == fs.getIrootBlockNum() && slot == 1) {
                     slot++;
                     continue;
-                }
+                }                
                 addr = dir.getAddress(slot);                
-                if (addr != 0) {
+                if (addr != 0 && addr!=MARK_RECYCLE) {
                     File file(addr, fs);
                     if (file.getName() == dirlist[i] && file.getType() == Inode::FILE) {
                         return addr;
                     }
-                } else {
+                } else if(addr==0) {
                     break;
                 }
                 slot++;
             }
             return -1;
         }
-        ret = iaddress;
+        ret = iaddress;        
     }
     return ret;
 }
@@ -439,16 +442,41 @@ bool File::cp(int iFile, string dirDest, Filesystem fs) {
     return true;
 }
 
-bool File::rm(int iFile, int iParDir, Filesystem fs) {
-    printf("tessss : %d\n",iFile);
-    if(iFile<=0 || iParDir<=0) {
+bool File::rm(int iFile, int iCurDir, Filesystem fs) {        
+    if(iFile<=0 || iCurDir<=0 || iFile==iCurDir) {
         return false;
     }
     //akses inode iDir    
     Inode inodeFile(iFile, fs);
-    if(inodeFile.getType()==Inode::DIR) {
-        return false;
-    }else if(inodeFile.getType()==Inode::FILE){
+    if(inodeFile.getType()==Inode::DIR) {        
+        //1. delete semua anak2nya(mulai dari slot 2)
+        File dir(iFile,fs);
+        cout<<"berusaha ngapus "<<dir.getName()<<endl;
+        int address = 0;
+        int slot=2;
+        while((address = dir.getAddress(slot))!=0) {//iterasi tiap anak
+            if(address!=MARK_RECYCLE) {
+                File::rm(address,iFile,fs);
+            }
+            slot++;
+        }
+        //2. setelah anak-anak didelete, apus data file folder diri sendiri        
+        fs.deleteBlock(inodeFile.getDataAddress(0));
+        //3. apus inode diri sendiri
+        fs.deleteBlock(iFile);
+        //4. kemudian isi alamat direktori yang memuat alamat inode direktori ini dengan MARK_RECYCLE
+        File curDir(iCurDir,fs);
+        slot=2;//slot mulai dari setelah diri sendiri dan parent
+        while(curDir.getAddress(slot)!=iFile && curDir.getAddress(slot)!=0) {
+            slot++;
+        }
+        if(curDir.getAddress(slot)!=0) {
+            curDir.delAddress(slot, fs);
+            return true;
+        }else{
+            return false;
+        }        
+    }else if(inodeFile.getType()==Inode::FILE){        
         //1. delete semua blok data file
         int slot=0;
         int dataaddress = 0;
@@ -459,7 +487,7 @@ bool File::rm(int iFile, int iParDir, Filesystem fs) {
         //2. delete blok inode file ini
         fs.deleteBlock(iFile);
         //3. isi alamat direktori yang memuat alamat inode file ini dengan MARK_RECYCLE
-        File dir(iParDir,fs);
+        File dir(iCurDir,fs);
         slot=2;//slot mulai dari setelah diri sendiri dan parent
         while(dir.getAddress(slot)!=iFile && dir.getAddress(slot)!=0) {
             slot++;
@@ -512,6 +540,7 @@ void File::delAddress(int slot, Filesystem fs) {
 int main() {
     Filesystem::format("device.txt", (unsigned int) 1024 * 17);
     Filesystem fs("device.txt");
+    printf("jumlah blok kosong : %d\n",fs.getEmptyBlockCount());
     int inodeaddr = fs.getIrootBlockNum();
     int usrinodeaddr = File::mkdir("usr", fs, inodeaddr);
     File::mkdir("a", fs, inodeaddr);
@@ -642,11 +671,21 @@ int main() {
     printf("\ntesting remove file test1.txt di folder usr\n");
     printf("sebelum ngapus blok kosong ada %d\n",fs.getEmptyBlockCount());
     File::rm(File::getInodeFromPath("test1.txt",5,fs),5,fs);
-    printf("dir root sekarang : \n");
+    printf("dir usr sekarang : \n");
     retLs = File::ls(5, fs);
     for (int i = 0; i < retLs.size(); i++) {
         cout << "dir " << i << " : " << retLs[i] << endl;
     }
     printf("setelah ngapus blok kosong ada %d\n",fs.getEmptyBlockCount());
+    
+    printf("\ntesting remove folder ea yang ada pada folder usr\n");
+    File::rm(File::getInodeFromPath("ea",5,fs),5,fs);
+    printf("dir usr sekarang : \n");
+    retLs = File::ls(5, fs);
+    for (int i = 0; i < retLs.size(); i++) {
+        cout << "dir " << i << " : " << retLs[i] << endl;
+    }
+    printf("jumlah blok kosong sekarang : %d\n",fs.getEmptyBlockCount());
+    printf("inode folder ea : %d\n",File::getInodeFromPath("aaaa",5,fs));
     return 0;
 }
