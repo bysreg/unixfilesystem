@@ -73,10 +73,10 @@ int Inode::consInode(Filesystem *fs, int type, vector<int> dataaddress, int argf
         data[bytecount] = b_type[i];
         bytecount++;
     }
-    //tulis empat byte kedua untuk alamat address blok lain
-    vector<byte> b_otheraddressblock = ByteUtil::intToBytes(argfilesize);
-    for (int i = 0; i < b_otheraddressblock.size(); i++) {
-        data[bytecount] = b_otheraddressblock[i];
+    //tulis empat byte kedua untuk size file yang ditunjuk oleh inode ini
+    vector<byte> b_argfilesize = ByteUtil::intToBytes(argfilesize);
+    for (int i = 0; i < b_argfilesize.size(); i++) {
+        data[bytecount] = b_argfilesize[i];
         bytecount++;
     }    
     //tulis empat byte ketiga dan seterusnya untuk alamat blok file disimpan(sebanyak dataaddress)
