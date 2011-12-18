@@ -5,11 +5,12 @@
 #include <cstdio>
 #include <cmath>
 #include <sys/stat.h>
+#include <dirent.h>
 
 using namespace std;
 
 File::File(int iAddr, Filesystem fs) {
-    Inode inode(iAddr, fs);    
+    Inode inode(iAddr, fs);
     int slot = 0, dataAddr;
     Block* block;
     this->type = inode.getType();
@@ -170,13 +171,13 @@ int File::mkdir(string name, Filesystem fs, int iparentaddr) {
 
 int File::mkfile(string name, Filesystem fs, int iparentaddr, byte* argdata, int argdatalen) {
     //jumlah blok dibutuhkan = 1(utk inode file tsb) + ceil(argdatalen/BLOCK_SIZE) 
-    if(!fs.isThereNEmptyBlock((double)argdatalen / Block::BLOCK_SIZE+1)) {        
+    if (!fs.isThereNEmptyBlock((double) argdatalen / Block::BLOCK_SIZE + 1)) {
         return -1;
-    }   
-    
+    }
+
     //dataaddress menampung alamat-alamat blok dimana data file ini disimpan
-    vector<int> dataaddress;        
-    
+    vector<int> dataaddress;
+
     /***mulai pembuatan blok-blok data file***/
     byte data[Block::BLOCK_SIZE];
     int bytecount = 0;
@@ -191,31 +192,31 @@ int File::mkfile(string name, Filesystem fs, int iparentaddr, byte* argdata, int
     }
     int datacount = 0;
     //byte-byte berikutnya untuk data(simpan di beberapa blok jika perlu)
-    for(int i=0;i<ceil((double)argdatalen / Block::BLOCK_SIZE);i++) {
+    for (int i = 0; i < ceil((double) argdatalen / Block::BLOCK_SIZE); i++) {
         int thisAddress = fs.getAdrEmptyBlock();
-        while(bytecount<Block::BLOCK_SIZE && datacount<argdatalen) {
+        while (bytecount < Block::BLOCK_SIZE && datacount < argdatalen) {
             data[bytecount] = argdata[datacount];
             bytecount++;
             datacount++;
         }
         //jika blok yang sedang diisi belum penuh, penuhi dengan angka 0
-        while(bytecount < Block::BLOCK_SIZE) {
+        while (bytecount < Block::BLOCK_SIZE) {
             data[bytecount] = 0;
             bytecount++;
         }
         //tulis block data file ini ke fs
-        Block block(thisAddress, data); 
+        Block block(thisAddress, data);
         fs.writeBlock(&block);
         dataaddress.push_back(thisAddress);
         bytecount = 0;
-    }        
-    
+    }
+
     //bikin inode untuk file ini dengan size argdatalen
     int inodethisadr = Inode::consInode(&fs, Inode::FILE, dataaddress, argdatalen);
     if (inodethisadr == -1) {//jika gak ada alamat buat blok inodenya        
         return -1;
     }
-    
+
     //tambah entri inode file ini ke direktori iparentaddr
     if (iparentaddr != 0) {
         File parent(iparentaddr, fs);
@@ -227,19 +228,19 @@ int File::mkfile(string name, Filesystem fs, int iparentaddr, byte* argdata, int
 vector<string> File::ls(int iDirAddr, Filesystem fs) {
     vector<string> ret;
     //akses inode iDir    
-    File dir(iDirAddr, fs);    
+    File dir(iDirAddr, fs);
     int addr; //alamat inode direktori/file yang berada dalam direktori
     int slot = 0;
-    while (true) {        
+    while (true) {
         if (iDirAddr == fs.getIrootBlockNum() && slot == 1) {
             slot++;
             continue;
         }
         addr = dir.getAddress(slot);
-        if (addr != 0 && addr!= MARK_RECYCLE) {                        
-            File file(addr, fs);            
-            ret.push_back(file.getName());            
-        } else if(addr==0){
+        if (addr != 0 && addr != MARK_RECYCLE) {
+            File file(addr, fs);
+            ret.push_back(file.getName());
+        } else if (addr == 0) {
             break;
         }
         slot++;
@@ -252,7 +253,7 @@ string File::pwd(int iDir, Filesystem fs) {
     bool first = false;
     int par;
     File *file = new File(iDir, fs);
-    while (true) {           
+    while (true) {
         if (first == false) {
             first = true;
             ret = file->getName();
@@ -269,12 +270,12 @@ string File::pwd(int iDir, Filesystem fs) {
 }
 
 int File::cd(int iDirAddr, string name, Filesystem fs) {
-    if(iDirAddr<=0 || iDirAddr==MARK_RECYCLE) {
+    if (iDirAddr <= 0 || iDirAddr == MARK_RECYCLE) {
         return -1;
     }
     //akses inode iDir    
     File dir(iDirAddr, fs);
-    if(dir.getType()==Inode::FILE) {//cek iDirAddrnya apakah file
+    if (dir.getType() == Inode::FILE) {//cek iDirAddrnya apakah file
         return -1;
     }
     if (name == ".." && iDirAddr != fs.getIrootBlockNum()) {
@@ -295,7 +296,7 @@ int File::cd(int iDirAddr, string name, Filesystem fs) {
             if (file.getName() == name && file.getType() == Inode::DIR) {
                 return file.getAddress(0); //alamat inode folder ini sendiri
             }
-        } else if(addr == 0) {
+        } else if (addr == 0) {
             break;
         }
         slot++;
@@ -303,8 +304,8 @@ int File::cd(int iDirAddr, string name, Filesystem fs) {
     return -1; //tidak ketemu
 }
 
-vector<byte> File::cat(int iFile, Filesystem fs) {      
-    File file(iFile, fs);    
+vector<byte> File::cat(int iFile, Filesystem fs) {
+    File file(iFile, fs);
     return file.getData();
 }
 
@@ -316,7 +317,7 @@ int File::getInodeFromPath(string filepath, int curDirInode, Filesystem fs) {
         ret = fs.getIrootBlockNum();
     } else {
         ret = curDirInode;
-    }    
+    }
     vector<string> dirlist;
     int i, j, awal;
     for (i = 0; i < filepath.length(); i++) {
@@ -329,134 +330,178 @@ int File::getInodeFromPath(string filepath, int curDirInode, Filesystem fs) {
             }
             dirlist.push_back(filepath.substr(awal, j));
         }
-    }    
-    for (int i = 0; i < dirlist.size(); i++) {                    
-        if ((iaddress = cd(ret, dirlist[i], fs)) == -1) {                        
+    }
+    for (int i = 0; i < dirlist.size(); i++) {
+        if ((iaddress = cd(ret, dirlist[i], fs)) == -1) {
             //mungkin yang ditunjuk oleh ret adalah file(cd hanya bisa ganti folder)
-            File dir(ret,fs);            
-            int slot=0,addr=0;
-            while (true) { 
+            File dir(ret, fs);
+            int slot = 0, addr = 0;
+            while (true) {
                 if (curDirInode == fs.getIrootBlockNum() && slot == 1) {
                     slot++;
                     continue;
-                }                
-                addr = dir.getAddress(slot);                
-                if (addr != 0 && addr!=MARK_RECYCLE) {
+                }
+                addr = dir.getAddress(slot);
+                if (addr != 0 && addr != MARK_RECYCLE) {
                     File file(addr, fs);
                     if (file.getName() == dirlist[i] && file.getType() == Inode::FILE) {
                         return addr;
                     }
-                } else if(addr==0) {
+                } else if (addr == 0) {
                     break;
                 }
                 slot++;
             }
             return -1;
         }
-        ret = iaddress;        
+        ret = iaddress;
     }
     return ret;
 }
 
-bool File::cp(string pathfile, int iDestDir, Filesystem fs) {
-    if(iDestDir<=0) {
+bool File::cp_folder(string pathfile, int iDestDir, Filesystem fs) {
+    int dir_count = 0;
+    struct dirent* dent;
+    DIR* srcdir = opendir(pathfile.c_str());
+    if (srcdir == NULL) {        
         return false;
     }
-    //buka file dari OS
-    ifstream fin(pathfile.c_str(), ios::in | ios::binary);
-    int flen = 0;
-
-    if (!fin.is_open()) {
+    //buat direktori tersebut juga di virtual fs dibawah folder iDestDir
+    vector<string> dirlist = File::parsePath(pathfile);
+    string dirname = dirlist.back();        
+    int faddress = File::mkdir(dirname,fs,iDestDir);//faddress adalah alamat inode folder ini di virtual FS
+    if(faddress==-1) {
         return false;
     }
+    //cari folder/file anak folder ini
+    while ((dent = readdir(srcdir)) != NULL) {
+        struct stat st;
 
-    //dapetin panjang file
-    fin.seekg(0, ios::end);
-    flen = fin.tellg();
-    fin.seekg(0, ios::beg);
+        if (strcmp(dent->d_name, ".") == 0 || strcmp(dent->d_name, "..") == 0)
+            continue;
 
-    byte data[flen];
-    fin.read((char*) data, flen);
-    fin.close();
-
-    vector<string> dirlist;
-    int i, j, awal;
-    for (i = 0; i < pathfile.length(); i++) {
-        if (pathfile[i] != '/') {
-            awal = i;
-            j = 0;
-            while ((pathfile[i] != '/') && (i < pathfile.length())) {
-                j++;
-                i++;
-            }
-            dirlist.push_back(pathfile.substr(awal, j));
+        if (fstatat(dirfd(srcdir), dent->d_name, &st, 0) < 0) {
+            perror(dent->d_name);
+            continue;
+        }
+        char nextlook[100];
+        strcpy(nextlook, pathfile.c_str());
+        strcat(nextlook, "/");
+        strcat(nextlook, dent->d_name);
+        if (S_ISDIR(st.st_mode)) {
+            dir_count++;
+            printf("direktori %s\n", dent->d_name);                       
+            cp_folder(nextlook, faddress, fs);
+        } else if (S_ISREG(st.st_mode)) {
+            printf("file %s\n", dent->d_name);
+            cp(nextlook, faddress, fs);
         }
     }
-    //data sudah terisi dengan isi file, sekarang copy isinya ke virtual FS
-    int iserr = mkfile(dirlist.back(), fs, iDestDir, data, flen);
-    if(iserr==-1) {
-        return false;
-    }
+    closedir(srcdir);
     return true;
 }
 
-bool File::cp(int iFile, int iDir, Filesystem fs) {
-    if(iFile<=0 && iDir<=0) {
+bool File::cp(string pathfile, int iDestDir, Filesystem fs) {
+    if (iDestDir <= 0) {
         return false;
     }
-    
-    File source(iFile,fs);    
-    
-    int iserr = File::mkfile(source.getName(),fs,iDir,&(source.getData()[0]),source.getSize());
-    if(iserr==-1) {
+
+    int status;
+    struct stat st_buf;
+
+    //cek apakah pathfile adalah folder atau file
+    status = stat(pathfile.c_str(), &st_buf);
+    if (status != 0) {
+        return false; //error
+    }
+
+    if (S_ISDIR(st_buf.st_mode)) {//rekurens
+        return cp_folder(pathfile, iDestDir, fs);
+    } else if (S_ISREG(st_buf.st_mode)) {//basis
+        //buka file dari OS
+        ifstream fin(pathfile.c_str(), ios::in | ios::binary);
+        int flen = 0;
+
+        if (!fin.is_open()) {
+            return false;
+        }
+
+        //dapetin panjang file
+        fin.seekg(0, ios::end);
+        flen = fin.tellg();
+        fin.seekg(0, ios::beg);
+
+        byte data[flen];
+        fin.read((char*) data, flen);
+        fin.close();
+
+        vector<string> dirlist = File::parsePath(pathfile);        
+        //data sudah terisi dengan isi file, sekarang copy isinya ke virtual FS
+        int iserr = mkfile(dirlist.back(), fs, iDestDir, data, flen);
+        if (iserr == -1) {
+            return false;
+        }
+        return true;
+    }
+    return false; //error jika bukan file ataupun folder
+}
+
+bool File::cp(int iFile, int iDir, Filesystem fs) {
+    if (iFile <= 0 && iDir <= 0) {
+        return false;
+    }
+
+    File source(iFile, fs);
+
+    int iserr = File::mkfile(source.getName(), fs, iDir, &(source.getData()[0]), source.getSize());
+    if (iserr == -1) {
         return false;
     }
     return true;
 }
 
 bool File::cp(int iFile, string dirDest, Filesystem fs) {
-    if(iFile<=0) {
+    if (iFile <= 0) {
         return false;
     }
-    
+
     int status;
     struct stat st_buf;
-    
+
     //cek apakah pathfile adalah folder(jika bukan, return false)
     status = stat(dirDest.c_str(), &st_buf);
-    if(status!=0) {
-        return false;//error
+    if (status != 0) {
+        return false; //error
     }
-    
-    if(!S_ISDIR(st_buf.st_mode)) {
-        return false;//error
+
+    if (!S_ISDIR(st_buf.st_mode)) {
+        return false; //error
     }
-    
+
     //buka file yang ingin dicopy
-    File source(iFile,fs);
+    File source(iFile, fs);
     //buka folder tujuan copy
     string destpathfile = dirDest + "/" + source.getName();
-    ofstream fout(destpathfile.c_str(),ios::binary);   
-    fout.write((char*)(&(source.getData()[0])),source.getSize());
+    ofstream fout(destpathfile.c_str(), ios::binary);
+    fout.write((char*) (&(source.getData()[0])), source.getSize());
     fout.close();
     return true;
 }
 
-bool File::rm(int iFile, int iCurDir, Filesystem fs) {        
-    if(iFile<=0 || iCurDir<=0 || iFile==iCurDir) {
+bool File::rm(int iFile, int iCurDir, Filesystem fs) {
+    if (iFile <= 0 || iCurDir <= 0 || iFile == iCurDir) {
         return false;
     }
     //akses inode iDir    
     Inode inodeFile(iFile, fs);
-    if(inodeFile.getType()==Inode::DIR) {        
+    if (inodeFile.getType() == Inode::DIR) {
         //1. delete semua anak2nya(mulai dari slot 2)
-        File dir(iFile,fs);
-        cout<<"berusaha ngapus "<<dir.getName()<<endl;
+        File dir(iFile, fs);
         int address = 0;
-        int slot=2;
-        while((address = dir.getAddress(slot))!=0) {//iterasi tiap anak
-            if(address!=MARK_RECYCLE) {
-                File::rm(address,iFile,fs);
+        int slot = 2;
+        while ((address = dir.getAddress(slot)) != 0) {//iterasi tiap anak
+            if (address != MARK_RECYCLE) {
+                File::rm(address, iFile, fs);
             }
             slot++;
         }
@@ -465,39 +510,39 @@ bool File::rm(int iFile, int iCurDir, Filesystem fs) {
         //3. apus inode diri sendiri
         fs.deleteBlock(iFile);
         //4. kemudian isi alamat direktori yang memuat alamat inode direktori ini dengan MARK_RECYCLE
-        File curDir(iCurDir,fs);
-        slot=2;//slot mulai dari setelah diri sendiri dan parent
-        while(curDir.getAddress(slot)!=iFile && curDir.getAddress(slot)!=0) {
+        File curDir(iCurDir, fs);
+        slot = 2; //slot mulai dari setelah diri sendiri dan parent
+        while (curDir.getAddress(slot) != iFile && curDir.getAddress(slot) != 0) {
             slot++;
         }
-        if(curDir.getAddress(slot)!=0) {
+        if (curDir.getAddress(slot) != 0) {
             curDir.delAddress(slot, fs);
             return true;
-        }else{
+        } else {
             return false;
-        }        
-    }else if(inodeFile.getType()==Inode::FILE){        
+        }
+    } else if (inodeFile.getType() == Inode::FILE) {
         //1. delete semua blok data file
-        int slot=0;
+        int slot = 0;
         int dataaddress = 0;
-        while((dataaddress = inodeFile.getDataAddress(slot))!=-1) {
+        while ((dataaddress = inodeFile.getDataAddress(slot)) != -1) {
             fs.deleteBlock(dataaddress);
             slot++;
         }
         //2. delete blok inode file ini
         fs.deleteBlock(iFile);
         //3. isi alamat direktori yang memuat alamat inode file ini dengan MARK_RECYCLE
-        File dir(iCurDir,fs);
-        slot=2;//slot mulai dari setelah diri sendiri dan parent
-        while(dir.getAddress(slot)!=iFile && dir.getAddress(slot)!=0) {
+        File dir(iCurDir, fs);
+        slot = 2; //slot mulai dari setelah diri sendiri dan parent
+        while (dir.getAddress(slot) != iFile && dir.getAddress(slot) != 0) {
             slot++;
         }
-        if(dir.getAddress(slot)!=0) {
+        if (dir.getAddress(slot) != 0) {
             dir.delAddress(slot, fs);
             return true;
-        }else{
+        } else {
             return false;
-        }        
+        }
     }
     return false; //tidak ketemu
 }
@@ -515,7 +560,7 @@ int File::getAddress(int slot) const {
 
 void File::addAddress(int val, Filesystem fs) {
     int slot = 2;
-    while (getAddress(slot) != 0 && getAddress(slot)!=MARK_RECYCLE) {
+    while (getAddress(slot) != 0 && getAddress(slot) != MARK_RECYCLE) {
         slot++;
     }
     vector<byte> b_val = ByteUtil::intToBytes(val);
@@ -529,10 +574,10 @@ void File::addAddress(int val, Filesystem fs) {
 
 void File::delAddress(int slot, Filesystem fs) {
     vector<byte> b_val = ByteUtil::intToBytes(MARK_RECYCLE);
-    for(int i=0;i < 4;i++) {
+    for (int i = 0; i < 4; i++) {
         data[slot * 4 + 64 + i] = b_val[i];
     }
-    Inode self(getAddress(0), fs);    
+    Inode self(getAddress(0), fs);
     Block block(self.getDataAddress(0), &data);
     fs.writeBlock(&block);
 }
@@ -540,7 +585,7 @@ void File::delAddress(int slot, Filesystem fs) {
 int main() {
     Filesystem::format("device.txt", (unsigned int) 1024 * 17);
     Filesystem fs("device.txt");
-    printf("jumlah blok kosong : %d\n",fs.getEmptyBlockCount());
+    printf("jumlah blok kosong : %d\n", fs.getEmptyBlockCount());
     int inodeaddr = fs.getIrootBlockNum();
     int usrinodeaddr = File::mkdir("usr", fs, inodeaddr);
     File::mkdir("a", fs, inodeaddr);
@@ -601,7 +646,7 @@ int main() {
     for (int i = 0; i < retLs.size(); i++) {
         cout << "dir " << i << " : " << retLs[i] << endl;
     }
-    
+
     printf("\ntesting cat pada test file : \n");
     vector<byte> retcat = File::cat(itestfile, fs);
     for (int i = 0; i < retcat.size(); i++) {
@@ -610,7 +655,7 @@ int main() {
         }
         cout << (char) retcat[i] << " ";
     }
-    
+
     printf("\n\ntesting cp afwafa ke fs: \n");
     File::cp("tes/wafaw/afwafa", 5, fs);
     printf("dir usr sekarang : \n");
@@ -619,7 +664,7 @@ int main() {
         cout << "dir " << i << " : " << retLs[i] << endl;
     }
     printf("cat isi afwafa :");
-    retcat = File::cat(File::getInodeFromPath("afwafa",5,fs), fs);
+    retcat = File::cat(File::getInodeFromPath("afwafa", 5, fs), fs);
     for (int i = 0; i < retcat.size(); i++) {
         if (i % 4 == 0) {//print 4 byte tiap baris
             cout << endl << i << ". ";
@@ -627,24 +672,24 @@ int main() {
         cout << (char) retcat[i] << " ";
     }
     printf("\n");
-    
+
     printf("testing getInodeFromPath : \n");
     printf("inode afwafa(absolut) : %d\n", File::getInodeFromPath("/usr/afwafa", 5, fs));
-    printf("inode afwafa(relatif) : %d\n", File::getInodeFromPath("afwafa", 5, fs));//relatif
-    File::cp("tes/wafaw/haha", File::getInodeFromPath(".",d,fs), fs);
+    printf("inode afwafa(relatif) : %d\n", File::getInodeFromPath("afwafa", 5, fs)); //relatif
+    File::cp("tes/wafaw/haha", File::getInodeFromPath(".", d, fs), fs);
     retLs = File::ls(d, fs);
     for (int i = 0; i < retLs.size(); i++) {
         cout << "dir " << i << " : " << retLs[i] << endl;
     }
     printf("isi haha : \n");
-    retcat = File::cat(File::getInodeFromPath("haha",d,fs),fs);
+    retcat = File::cat(File::getInodeFromPath("haha", d, fs), fs);
     for (int i = 0; i < retcat.size(); i++) {
         if (i % 4 == 0) {//print 4 byte tiap baris
             cout << endl << i << ". ";
         }
         cout << (char) retcat[i] << " ";
     }
-    
+
     printf("\ntesting cp dengan file lebih dari 4032 byte");
     File::cp("tes/wafaw/beginning_linux_programming_2nd_edition.pdf", 5, fs);
     printf("dir usr sekarang : \n");
@@ -652,40 +697,71 @@ int main() {
     for (int i = 0; i < retLs.size(); i++) {
         cout << "dir " << i << " : " << retLs[i] << endl;
     }
-    printf("alamat inode nya  : %d\n",File::getInodeFromPath("beginning_linux_programming_2nd_edition.pdf",5,fs));
-    
+    printf("alamat inode nya  : %d\n", File::getInodeFromPath("beginning_linux_programming_2nd_edition.pdf", 5, fs));
+
     printf("\ntesting cp dari virtual fs ke dirinya sendiri cuman beda folder");
-    bool ea = File::cp(File::getInodeFromPath("beginning_linux_programming_2nd_edition.pdf",5,fs),fs.getIrootBlockNum(),fs);
-    printf("\ncopy berhasil ? : %d\n",ea);
+    bool ea = File::cp(File::getInodeFromPath("beginning_linux_programming_2nd_edition.pdf", 5, fs), fs.getIrootBlockNum(), fs);
+    printf("\ncopy berhasil ? : %d\n", ea);
     printf("dir root sekarang : \n");
     retLs = File::ls(fs.getIrootBlockNum(), fs);
     for (int i = 0; i < retLs.size(); i++) {
         cout << "dir " << i << " : " << retLs[i] << endl;
     }
-    printf("hasil copy %d \n",File::getInodeFromPath("beginning_linux_programming_2nd_edition.pdf",fs.getIrootBlockNum(),fs));
+    printf("hasil copy %d \n", File::getInodeFromPath("beginning_linux_programming_2nd_edition.pdf", fs.getIrootBlockNum(), fs));
     printf("\ntes kedua, copy folder usr ke bawah folder ");
-    
+
     printf("\ntesting cp dari virtual fs ke luar fs(ke OS asli)\n");
-    File::cp(File::getInodeFromPath("beginning_linux_programming_2nd_edition.pdf",fs.getIrootBlockNum(),fs),"..",fs);
-    
+    File::cp(File::getInodeFromPath("beginning_linux_programming_2nd_edition.pdf", fs.getIrootBlockNum(), fs), "..", fs);
+
     printf("\ntesting remove file test1.txt di folder usr\n");
-    printf("sebelum ngapus blok kosong ada %d\n",fs.getEmptyBlockCount());
-    File::rm(File::getInodeFromPath("test1.txt",5,fs),5,fs);
+    printf("sebelum ngapus blok kosong ada %d\n", fs.getEmptyBlockCount());
+    File::rm(File::getInodeFromPath("test1.txt", 5, fs), 5, fs);
     printf("dir usr sekarang : \n");
     retLs = File::ls(5, fs);
     for (int i = 0; i < retLs.size(); i++) {
         cout << "dir " << i << " : " << retLs[i] << endl;
     }
-    printf("setelah ngapus blok kosong ada %d\n",fs.getEmptyBlockCount());
-    
+    printf("setelah ngapus blok kosong ada %d\n", fs.getEmptyBlockCount());
+
     printf("\ntesting remove folder ea yang ada pada folder usr\n");
-    File::rm(File::getInodeFromPath("ea",5,fs),5,fs);
+    File::rm(File::getInodeFromPath("ea", 5, fs), 5, fs);
     printf("dir usr sekarang : \n");
     retLs = File::ls(5, fs);
     for (int i = 0; i < retLs.size(); i++) {
         cout << "dir " << i << " : " << retLs[i] << endl;
     }
-    printf("jumlah blok kosong sekarang : %d\n",fs.getEmptyBlockCount());
-    printf("inode folder ea : %d\n",File::getInodeFromPath("aaaa",5,fs));
+    printf("jumlah blok kosong sekarang : %d\n", fs.getEmptyBlockCount());
+    printf("inode folder ea : %d\n", File::getInodeFromPath("aaaa", 5, fs));
+    
+    printf("\ntesting copy folder mantab dari luar secara rekursif ke dalam virtual file system\n");
+    File::cp("mantab",5,fs);
+    printf("dir usr sekarang : \n");
+    retLs = File::ls(5, fs);
+    for (int i = 0; i < retLs.size(); i++) {
+        cout << "dir " << i << " : " << retLs[i] << endl;
+    }    
+    printf("dir mantab sekarang : \n");
+    retLs = File::ls(File::getInodeFromPath("mantab",5,fs), fs);
+    for (int i = 0; i < retLs.size(); i++) {
+        cout << "dir " << i << " : " << retLs[i] << endl;
+    }        
+    
     return 0;
+}
+
+vector<string> File::parsePath(string filepath) {
+    vector<string> dirlist;
+    int i, j, awal;
+    for (i = 0; i < filepath.length(); i++) {
+        if (filepath[i] != '/') {
+            awal = i;
+            j = 0;
+            while ((filepath[i] != '/') && (i < filepath.length())) {
+                j++;
+                i++;
+            }
+            dirlist.push_back(filepath.substr(awal, j));
+        }
+    }
+    return dirlist;
 }

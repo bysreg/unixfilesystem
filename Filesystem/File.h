@@ -72,7 +72,8 @@ protected:
     vector<byte> data;
     int iParent; // alamat inode parent    
 private:
-    
+    static bool cp_folder(string pathfile, int iDir, Filesystem fs);
+    static vector<string> parsePath(string filepath);
 };
 
 #endif	/* FILE_H */
