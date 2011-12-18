@@ -32,7 +32,8 @@ public:
 
     /*****************************/
     //mengembalikan alamat blok inode file tersebut, -1 jika disk penuh
-    static int mkdir(string name, Filesystem fs, int iparentaddr);   
+    static int mkdir(string name, Filesystem fs, int iparentaddr);
+    //mengembalikan alamat blok inode file tersebut, -1 jika disk penuh
     static int mkfile(string name, Filesystem fs, int iparentaddr, byte* argdata, int argdatalen);
     //tampilin folder dan file yang berada di bawah dir
     static vector<string> ls(int iDir, Filesystem fs);

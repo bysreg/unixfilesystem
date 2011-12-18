@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <cstdio>
+#include <cmath>
 
 using namespace std;
 
@@ -167,21 +168,18 @@ int File::mkdir(string name, Filesystem fs, int iparentaddr) {
 }
 
 int File::mkfile(string name, Filesystem fs, int iparentaddr, byte* argdata, int argdatalen) {
-    int thisAddress = fs.getAdrSecondEmptyBlock();
-    if (thisAddress == -1) {//jika gak ada alamat buat blok filenya
+    //jumlah blok dibutuhkan = 1(utk inode file tsb) + ceil(argdatalen/BLOCK_SIZE) 
+    if(!fs.isThereNEmptyBlock((double)argdatalen / Block::BLOCK_SIZE+1)) {        
         return -1;
-    }
-    vector<int> dataaddress;
-    dataaddress.push_back(thisAddress);
-
-    //bikin inode untuk file ini dengan size argdatalen
-    int inodethisadr = Inode::consInode(&fs, Inode::FILE, dataaddress, argdatalen);
-    if (inodethisadr == -1) {//jika gak ada alamat buat blok inodenya
-        return -1;
-    }
+    }   
+    
+    //dataaddress menampung alamat-alamat blok dimana data file ini disimpan
+    vector<int> dataaddress;        
+    
+    /***mulai pembuatan blok-blok data file***/
     byte data[Block::BLOCK_SIZE];
     int bytecount = 0;
-    /**** 64 byte pertama untuk nama ****/
+    // 64 byte pertama untuk nama
     for (int i = 0; i < name.length(); i++) {
         data[bytecount] = name[i];
         bytecount++;
@@ -190,19 +188,33 @@ int File::mkfile(string name, Filesystem fs, int iparentaddr, byte* argdata, int
         data[bytecount] = '\0';
         bytecount++;
     }
-    //byte berikutnya untuk data
-    for (int i = 0; i < argdatalen; i++) {
-        data[bytecount] = argdata[i];
-        bytecount++;
+    int datacount = 0;
+    //byte-byte berikutnya untuk data(simpan di beberapa blok jika perlu)
+    for(int i=0;i<ceil((double)argdatalen / Block::BLOCK_SIZE);i++) {
+        int thisAddress = fs.getAdrEmptyBlock();
+        while(bytecount<Block::BLOCK_SIZE && datacount<argdatalen) {
+            data[bytecount] = argdata[datacount];
+            bytecount++;
+            datacount++;
+        }
+        //jika blok yang sedang diisi belum penuh, penuhi dengan angka 0
+        while(bytecount < Block::BLOCK_SIZE) {
+            data[bytecount] = 0;
+            bytecount++;
+        }
+        //tulis block data file ini ke fs
+        Block block(thisAddress, data); 
+        fs.writeBlock(&block);
+        dataaddress.push_back(thisAddress);
+        bytecount = 0;
+    }        
+    
+    //bikin inode untuk file ini dengan size argdatalen
+    int inodethisadr = Inode::consInode(&fs, Inode::FILE, dataaddress, argdatalen);
+    if (inodethisadr == -1) {//jika gak ada alamat buat blok inodenya        
+        return -1;
     }
-    //isi byte sisa dengan 0
-    while (bytecount < Block::BLOCK_SIZE) {
-        data[bytecount] = 0;
-        bytecount++;
-    }
-    //tulis block data file ini ke fs
-    Block block(thisAddress, data); // blok data    
-    fs.writeBlock(&block);
+    
     //tambah entri inode file ini ke direktori iparentaddr
     if (iparentaddr != 0) {
         File parent(iparentaddr, fs);
@@ -372,7 +384,10 @@ bool File::cp(string pathfile, int iDestDir, Filesystem fs) {
         }
     }
     //data sudah terisi dengan isi file, sekarang copy isinya ke virtual FS
-    mkfile(dirlist.back(), fs, iDestDir, data, flen);
+    int iserr = mkfile(dirlist.back(), fs, iDestDir, data, flen);
+    if(iserr==-1) {
+        return false;
+    }
     return true;
 }
 
@@ -495,6 +510,7 @@ int main() {
     for (int i = 0; i < retLs.size(); i++) {
         cout << "dir " << i << " : " << retLs[i] << endl;
     }
+    
     printf("\ntesting cat pada test file : \n");
     vector<byte> retcat = File::cat(itestfile, fs);
     for (int i = 0; i < retcat.size(); i++) {
@@ -503,7 +519,8 @@ int main() {
         }
         cout << (char) retcat[i] << " ";
     }
-    printf("\n\ntesting cp : \n");
+    
+    printf("\n\ntesting cp afwafa ke fs: \n");
     File::cp("tes/wafaw/afwafa", 5, fs);
     printf("dir usr sekarang : \n");
     retLs = File::ls(5, fs);
@@ -511,7 +528,7 @@ int main() {
         cout << "dir " << i << " : " << retLs[i] << endl;
     }
     printf("cat isi afwafa :");
-    retcat = File::cat(itestfile, fs);
+    retcat = File::cat(File::getInodeFromPath("afwafa",5,fs), fs);
     for (int i = 0; i < retcat.size(); i++) {
         if (i % 4 == 0) {//print 4 byte tiap baris
             cout << endl << i << ". ";
@@ -519,6 +536,7 @@ int main() {
         cout << (char) retcat[i] << " ";
     }
     printf("\n");
+    
     printf("testing getInodeFromPath : \n");
     printf("inode afwafa(absolut) : %d\n", File::getInodeFromPath("/usr/afwafa", 5, fs));
     printf("inode afwafa(relatif) : %d\n", File::getInodeFromPath("afwafa", 5, fs));//relatif
@@ -535,5 +553,14 @@ int main() {
         }
         cout << (char) retcat[i] << " ";
     }
+    
+    printf("\ntesting cp dengan file lebih dari 4032 byte");
+    File::cp("tes/wafaw/beginning_linux_programming_2nd_edition.pdf", 5, fs);
+    printf("dir usr sekarang : \n");
+    retLs = File::ls(5, fs);
+    for (int i = 0; i < retLs.size(); i++) {
+        cout << "dir " << i << " : " << retLs[i] << endl;
+    }
+    printf("alamat inode nya  : %d\n",File::getInodeFromPath("beginning_linux_programming_2nd_edition.pdf",5,fs));
     return 0;
 }

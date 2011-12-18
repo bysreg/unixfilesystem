@@ -24,7 +24,7 @@ public:
     //mengambil alamat inode ini
     int getAddress() const;
     
-    //membangun inode dan mengembalikan blok representasi inode tersebut, mengembalikan -1 jika tidak ada size
+    //membangun inode dan mengembalikan alamat blok representasi inode tersebut, mengembalikan -1 jika tidak ada size
     static int consInode(Filesystem *fs, int type, vector<int> dataaddress, int argfilesize);
         
 //    void setDataAddress(int slot, int blockAddress);
