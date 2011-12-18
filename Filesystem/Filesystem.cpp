@@ -98,9 +98,9 @@ bool Filesystem::format(string path, unsigned int size) {
 bool Filesystem::getBlock(int number, Block *&block) {      
     ifstream fin(this->path,ios::in | ios::binary);
     
-    if(!fin.is_open() || number<0) {        
+    if(!fin.is_open() || number<0) {             
         return false;
-    }    
+    }        
     byte data[Block::BLOCK_SIZE];        
     fin.seekg(Block::BLOCK_SIZE*number,ios::beg);                           
     fin.read((char*)data, Block::BLOCK_SIZE);
@@ -175,42 +175,93 @@ bool Filesystem::isBlockEmpty(int number) {
 }
 
 int Filesystem::getAdrEmptyBlock() {    
-    int bitmapblocknum=1;
-    int count=0;
-    Block *block;
-    //ambil blok pertama bitmap
-    getBlock(bitmapblocknum,block);
-    for(int nb=bitmapblocknum;nb<irootBlockNum;nb++) {
-        for(int i=0;i<nblock;i++) {            
-            if((*block).getByte(i)==0) {//jika blok tersebut kosong                
-                return (i+((nb-1)*Block::BLOCK_SIZE));
+    int bitmapblocknum=1;    
+    Block *block;    
+    int blockcount=0;
+           
+    for(int nb=bitmapblocknum;nb<irootBlockNum;nb++) {        
+        getBlock(nb,block);
+        int i=0;        
+        while(i<Block::BLOCK_SIZE && blockcount<nblock) {
+            if((*block).getByte(i)==0) {//byte ke-i == 0 menandakan blok ke-i kosong
+                return (i+((nb-bitmapblocknum)*Block::BLOCK_SIZE));
             }
-            count++;
+            i++;
+            blockcount++;
         }
+        delete block;
     }
     return -1;
 }
 
 int Filesystem::getAdrSecondEmptyBlock() {
-    int bitmapblocknum=1;
-    bool foundfirst=false;
-    int count=0;
-    Block *block;
-    //ambil blok pertama bitmap
-    getBlock(bitmapblocknum,block);
-    for(int nb=bitmapblocknum;nb<irootBlockNum;nb++) {
-        for(int i=0;i<nblock;i++) {            
-            if((*block).getByte(i)==0) {//jika blok tersebut kosong                
-                if(foundfirst==false) {//jika belom ketemu yang pertama
+    int bitmapblocknum=1;    
+    Block *block;    
+    int blockcount=0;
+    bool foundfirst=false; 
+    
+    for(int nb=bitmapblocknum;nb<irootBlockNum;nb++) {        
+        getBlock(nb,block);
+        int i=0;        
+        while(i<Block::BLOCK_SIZE && blockcount<nblock) {
+            if((*block).getByte(i)==0) {//byte ke-i == 0 menandakan blok ke-i kosong
+                if(foundfirst==false) {
                     foundfirst=true;
                 }else{
-                    return (i+((nb-1)*Block::BLOCK_SIZE));
-                }                
+                    return (i+((nb-bitmapblocknum)*Block::BLOCK_SIZE));
+                }
             }
-            count++;
+            i++;
+            blockcount++;
         }
+        delete block;
     }
     return -1;
+}
+
+bool Filesystem::isThereNEmptyBlock(int n) {
+    int bitmapblocknum=1;    
+    Block *block;
+    int emptycount=0;   
+    int blockcount=0;
+           
+    for(int nb=bitmapblocknum;nb<irootBlockNum;nb++) {        
+        getBlock(nb,block);
+        int i=0;        
+        while(i<Block::BLOCK_SIZE && blockcount<nblock) {
+            if((*block).getByte(i)==0) {//byte ke-i == 0 menandakan blok ke-i kosong
+                emptycount++;
+            }
+            if(emptycount>=n) {                
+                return true;
+            }
+            i++;
+            blockcount++;
+        }
+        delete block;
+    }
+    return false;
+}
+
+int Filesystem::getEmptyBlockCount() {
+    int bitmapblocknum=1;    
+    Block *block;
+    int emptycount=0;   
+    int blockcount=0;
+     
+    for(int nb=bitmapblocknum;nb<irootBlockNum;nb++) {        
+        getBlock(nb,block);
+        int i=0;        
+        while(i<Block::BLOCK_SIZE && blockcount<nblock) {
+            if((*block).getByte(i)==0) {//byte ke-i == 0 menandakan blok ke-i kosong
+                emptycount++;
+            }
+            i++;
+            blockcount++;
+        }
+        delete block;
+    }
+    return emptycount;
 }
 
 char* Filesystem::getPath() const {
@@ -219,7 +270,7 @@ char* Filesystem::getPath() const {
 
 //int main() {
 //    //tes format
-//    cout<<(Filesystem::format("device.txt",(unsigned int)1024*17))<<endl;         
+//    cout<<(Filesystem::format("device.txt",(unsigned int)1024*64))<<endl;         
 //    
 //    //tes mount
 //    Filesystem fs("device.txt");
@@ -236,15 +287,20 @@ char* Filesystem::getPath() const {
 //    printf("apakah blok 4 kosong? : %d(0==false 1==true)\n" ,fs.isBlockEmpty(4));
 //    printf("apakah blok 5 kosong? : %d(0==false 1==true)\n" ,fs.isBlockEmpty(5));
 //    printf("apakah blok 6 kosong? : %d(0==false 1==true)\n" ,fs.isBlockEmpty(6));
-//    
+//    printf("apakah blok 7 kosong? : %d(0==false 1==true)\n" ,fs.isBlockEmpty(7));
+//    printf("apakah blok 8 kosong? : %d(0==false 1==true)\n" ,fs.isBlockEmpty(8));
+//    printf("apakah blok 9 kosong? : %d(0==false 1==true)\n" ,fs.isBlockEmpty(9));
+//    printf("apakah blok 10 kosong? : %d(0==false 1==true)\n" ,fs.isBlockEmpty(10));
 //    //cek getAdrEmptyBlock() 
 //    printf("alamat blok kosong mana : %d\n",fs.getAdrEmptyBlock());
+//    //cek getAdrSecondEmptyBlock
+//    printf("alamat blok kosong kedua mana : %d\n",fs.getAdrSecondEmptyBlock());
 //    
-//    printf("tulis 4096 byte di blok ketiga filesystem sebagai sudah terisi di bitmap...\n");
+//    printf("tulis blok ke-8 sampai 4095 sebagai sudah terisi di bitmap...\n");
 //    //cek writeblock()
 //    Block *block;
-//    fs.getBlock(3,block);
-//    for(int i=0;i<Block::BLOCK_SIZE;i++) {
+//    fs.getBlock(fs.getBitmapStartBlockNum(),block);
+//    for(int i=8;i<Block::BLOCK_SIZE;i++) {
 //        block->data[i]=1;
 //    }
 //    fs.writeBlock(block);
@@ -252,7 +308,16 @@ char* Filesystem::getPath() const {
 //    delete block;
 //    
 //    //cek getAdrEmptyBlock() 
-//    printf("cek lagi blok kosong mana : %d",fs.getAdrEmptyBlock());
+//    printf("cek lagi blok kosong mana : %d\n",fs.getAdrEmptyBlock());
+//    
+//    //cek getAdrSecondEmptyBlock()
+//    printf("cek lagi blok kosong kedua mana : %d\n",fs.getAdrSecondEmptyBlock());
+//    
+//    //cek getEmptyBlockCount()
+//    printf("jumlah blok kosong : %d\n", fs.getEmptyBlockCount());
+//    
+//    //cek isThereNEmptyBlock() 
+//    printf("cek apakah ada 11898 blok kosong : %d\n", fs.isThereNEmptyBlock(11898));
 //    
 //    return 0;
 //}
