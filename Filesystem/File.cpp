@@ -359,6 +359,44 @@ int File::getInodeFromPath(string filepath, int curDirInode, Filesystem fs) {
     return ret;
 }
 
+int File::getInodeParentFromPath(string filepath,int curDirInode, Filesystem fs) {
+    int iaddress;
+    int ret;
+    if (filepath[0] == '/') {
+        //jika karakter pertama '/' berarti yang dipake absolut(search dari root)
+        ret = fs.getIrootBlockNum();
+    } else {
+        ret = curDirInode;
+    }
+    vector<string> dirlist = File::parsePath(filepath);    
+    for (int i = 0; i < dirlist.size()-1; i++) {//file terakhir gak dilacak
+        if ((iaddress = cd(ret, dirlist[i], fs)) == -1) {
+            //mungkin yang ditunjuk oleh ret adalah file(cd hanya bisa ganti folder)
+            File dir(ret, fs);
+            int slot = 0, addr = 0;
+            while (true) {
+                if (curDirInode == fs.getIrootBlockNum() && slot == 1) {
+                    slot++;
+                    continue;
+                }
+                addr = dir.getAddress(slot);
+                if (addr != 0 && addr != MARK_RECYCLE) {
+                    File file(addr, fs);
+                    if (file.getName() == dirlist[i] && file.getType() == Inode::FILE) {
+                        return addr;
+                    }
+                } else if (addr == 0) {
+                    break;
+                }
+                slot++;
+            }
+            return -1;
+        }
+        ret = iaddress;
+    }
+    return ret;
+}
+
 bool File::cp_folder(string pathfile, int iDestDir, Filesystem fs) {
     int dir_count = 0;
     struct dirent* dent;
@@ -522,11 +560,11 @@ bool File::cp(int iFile, string dirDest, Filesystem fs) {
     }
 }
 
-bool File::rm(int iFile, int iCurDir, Filesystem fs) {
-    if (iFile <= 0 || iCurDir <= 0 || iFile == iCurDir) {
+bool File::rm(int iFile, int iParDir, Filesystem fs) {
+    if (iFile <= 0 || iParDir <= 0 || iFile == iParDir) {
         return false;
     }
-    //akses inode iDir    
+    //akses inode iFile  
     Inode inodeFile(iFile, fs);
     if (inodeFile.getType() == Inode::DIR) {
         //1. delete semua anak2nya(mulai dari slot 2)
@@ -544,15 +582,16 @@ bool File::rm(int iFile, int iCurDir, Filesystem fs) {
         //3. apus inode diri sendiri
         fs.deleteBlock(iFile);
         //4. kemudian isi alamat direktori yang memuat alamat inode direktori ini dengan MARK_RECYCLE
-        File curDir(iCurDir, fs);
+        File curDir(iParDir, fs);
         slot = 2; //slot mulai dari setelah diri sendiri dan parent
         while (curDir.getAddress(slot) != iFile && curDir.getAddress(slot) != 0) {
             slot++;
         }
-        if (curDir.getAddress(slot) != 0) {
-            curDir.delAddress(slot, fs);
+        if (curDir.getAddress(slot) == iFile) {//ketemu
+            curDir.delAddress(slot, fs);            
             return true;
         } else {
+            printf("KETEMU COK\n");
             return false;
         }
     } else if (inodeFile.getType() == Inode::FILE) {
@@ -566,7 +605,7 @@ bool File::rm(int iFile, int iCurDir, Filesystem fs) {
         //2. delete blok inode file ini
         fs.deleteBlock(iFile);
         //3. isi alamat direktori yang memuat alamat inode file ini dengan MARK_RECYCLE
-        File dir(iCurDir, fs);
+        File dir(iParDir, fs);
         slot = 2; //slot mulai dari setelah diri sendiri dan parent
         while (dir.getAddress(slot) != iFile && dir.getAddress(slot) != 0) {
             slot++;
@@ -579,6 +618,22 @@ bool File::rm(int iFile, int iCurDir, Filesystem fs) {
         }
     }
     return false; //tidak ketemu
+}
+
+bool File::mv(string source, string dest, int iCurDir, Filesystem fs) {
+    if(source[0]=='@') {//pindahin dari OS ke virtual FS
+        string psource = source.substr(1);
+        cp(psource,File::getInodeFromPath(dest,iCurDir,fs),fs);
+        File::removedirectoryrecursively(psource.c_str());
+    }else if(dest[0]=='@') {//pindahin dari virtual FS ke OS
+        string pdest = dest.substr(1);
+        cp(File::getInodeFromPath(source,iCurDir,fs),pdest,fs);
+        rm(File::getInodeFromPath(source,iCurDir,fs),File::getInodeParentFromPath(source,iCurDir,fs),fs);
+    }else if(source[0]!='@' && dest[0]!='@') {//pindahin dari virtual FS ke virtual FS sendiri
+        cp(File::getInodeFromPath(source,iCurDir,fs),File::getInodeFromPath(dest,iCurDir,fs),fs);
+        rm(File::getInodeFromPath(source,iCurDir,fs),iCurDir,fs);
+    }
+    return true;
 }
 
 int File::getAddress(int slot) const {
@@ -767,7 +822,7 @@ int main() {
     printf("jumlah blok kosong sekarang : %d\n", fs.getEmptyBlockCount());
     printf("inode folder ea : %d\n", File::getInodeFromPath("aaaa", 5, fs));
     
-    printf("\ntesting copy folder mantab dari luar secara rekursif ke dalam virtual file system\n");
+    printf("\ntesting copy folder mantab dari luar secara rekursif ke dalam folder usr di virtual file system\n");
     File::cp("mantab",5,fs);
     printf("dir usr sekarang : \n");
     retLs = File::ls(5, fs);
@@ -788,9 +843,42 @@ int main() {
         cout << "dir " << i << " : " << retLs[i] << endl;
     }
     
-    printf("\ntesting copy folder root yang ada di virtual FS ke OS"); 
-    File::cp(3,"testout",fs);
+    printf("\ntesting copy folder usr yang ada di virtual FS ke OS"); 
+    File::cp(5,"testout",fs);
     
+    printf("\ntesting mv folder mantab di dalam usr ke folder root");
+    File::mv("/usr/mantab","/",5,fs);
+    printf("dir root sekarang : \n");
+    retLs = File::ls(3, fs);
+    for (int i = 0; i < retLs.size(); i++) {
+        cout << "dir " << i << " : " << retLs[i] << endl;
+    }
+    printf("dir usr sekarang : \n");
+    retLs = File::ls(5, fs);
+    for (int i = 0; i < retLs.size(); i++) {
+        cout << "dir " << i << " : " << retLs[i] << endl;
+    }
+    
+    printf("\ntesting mv folder jaya yang sekarang di root ke OS\n");
+    printf("dir root sebelum move : \n");
+    retLs = File::ls(3, fs);
+    for (int i = 0; i < retLs.size(); i++) {
+        cout << "dir " << i << " : " << retLs[i] << endl;
+    }
+    File::mv("/jaya","@.",5,fs);    
+    printf("dir root sekarang : \n");
+    retLs = File::ls(3, fs);
+    for (int i = 0; i < retLs.size(); i++) {
+        cout << "dir " << i << " : " << retLs[i] << endl;
+    }    
+    
+    printf("\n testing move dari OS ke virtual FS\n");
+    File::mv("@nuketest","/",5,fs);
+    printf("dir root sekarang : \n");
+    retLs = File::ls(3, fs);
+    for (int i = 0; i < retLs.size(); i++) {
+        cout << "dir " << i << " : " << retLs[i] << endl;
+    }    
     return 0;
 }
 
@@ -809,4 +897,40 @@ vector<string> File::parsePath(string filepath) {
         }
     }
     return dirlist;
+}
+
+int File::removedirectoryrecursively(const char *dirname)
+{
+    DIR *dir;
+    struct dirent *entry;
+    char path[PATH_MAX];
+    
+    dir = opendir(dirname);
+    if (dir == NULL) {
+        perror("Error opendir()");
+        return 0;
+    }
+
+    while ((entry = readdir(dir)) != NULL) {
+        if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) {
+            snprintf(path, (size_t) PATH_MAX, "%s/%s", dirname, entry->d_name);
+            if (entry->d_type == DT_DIR) {
+                removedirectoryrecursively(path);
+            }
+
+            /*
+             * Yang sekarang dipakai hanya simulasi
+             * Untuk beneran pake : remove*STUB*(path);
+             * info : man 3 remove                         
+             */
+            printf("(simulasi) Menghapus: %s\n", path);            
+        }
+
+    }
+    closedir(dir);
+
+    //direktori ini sudah kosong, sekarang delete folder ini sendiri
+    printf("(simulasi) Menghapus: %s\n", dirname);
+
+    return 1;
 }
