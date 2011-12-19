@@ -50,14 +50,16 @@ public:
     //tampilin folder dan file yang berada di bawah dir
     static vector<string> ls(int iDir, Filesystem fs);
     //menampilkan working directory
-    static string pwd(int iDir, Filesystem fs);
+    static string pwd(int iDir, Filesystem fs);    
     //mengembalikan inode direktori name pada direktori iDir, mengembalikan -1 jika tidak ada atau bukan folder
     static int cd(int iDir, string name, Filesystem fs);
     //membuka file dan mengembalikan isi file pada alamat inode tesebut
     static vector<byte> cat(int inode, Filesystem fs);
+    //FUNGSI CD yang benar
     //mengambil inode file pada path tersebut(direktori maupun file), mengembalikan -1 jika tidak ada
     static int getInodeFromPath(string filepath, int curDirInode, Filesystem fs);
-    //mengambil inode parent dari file yang ditunjuk pada filepath, mengembalikan -1 jika tidak ada
+    //mengambil inode parent dari file yang ditunjuk pada filepath, mengembalikan -1 jika file tersebut tidak ada
+    //jika yang dicari parent folder root, akan mengembalikan folder root itu sendiri
     static int getInodeParentFromPath(string filepath,int curDirInode, Filesystem fs);
     //menyalin file dari filesystem sistem operasi ke virtual filesystem    
     static bool cp(string pathfile, int iDir, Filesystem fs);       
@@ -67,7 +69,7 @@ public:
     //mengembalikan nilai false jika pathfile bukan folder(BARU FILE)
     static bool cp(int iFile, string pathfile, Filesystem fs);
     //menghapus file/folder pada pathfile, mengembalikan false jika gagal
-    static bool rm(string pathfile, Filesystem fs);
+    static bool rm(string pathfile, int iCurDir, Filesystem fs);
     //menghapus file/folder iFile yang ada pada iParDir(folder parentnya) jika ada
     //mengembalikan false jika gagal
     static bool rm(int iFile, int iParDir, Filesystem fs);

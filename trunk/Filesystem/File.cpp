@@ -367,9 +367,13 @@ int File::getInodeParentFromPath(string filepath,int curDirInode, Filesystem fs)
         ret = fs.getIrootBlockNum();
     } else {
         ret = curDirInode;
+    }    
+    if(File::getInodeFromPath(filepath,curDirInode,fs)==-1) {//file yang mau dicari parent nya gak ada
+        return -1;
     }
-    vector<string> dirlist = File::parsePath(filepath);    
-    for (int i = 0; i < dirlist.size()-1; i++) {//file terakhir gak dilacak
+    vector<string> dirlist = File::parsePath(filepath);            
+    for (int i = 0; i < (((int)dirlist.size())-1); i++) {//file terakhir gak dilacak        
+        cout<<dirlist[i]<<endl;
         if ((iaddress = cd(ret, dirlist[i], fs)) == -1) {
             //mungkin yang ditunjuk oleh ret adalah file(cd hanya bisa ganti folder)
             File dir(ret, fs);
@@ -558,6 +562,12 @@ bool File::cp(int iFile, string dirDest, Filesystem fs) {
         }
         return false;
     }
+}
+
+bool File::rm(string pathfile, int iCurDir, Filesystem fs) {
+    int iFile = File::getInodeFromPath(pathfile,iCurDir,fs);
+    int iParDir = File::getInodeParentFromPath(pathfile,iCurDir,fs);
+    return rm(iFile,iParDir,fs);
 }
 
 bool File::rm(int iFile, int iParDir, Filesystem fs) {
@@ -878,7 +888,19 @@ int main() {
     retLs = File::ls(3, fs);
     for (int i = 0; i < retLs.size(); i++) {
         cout << "dir " << i << " : " << retLs[i] << endl;
-    }    
+    }   
+    
+    printf("\ntesting getInodeParentFromPath\n");
+    printf("%d\n",File::getInodeParentFromPath("usr/afwafa",3,fs));
+    printf("%d\n",File::getInodeFromPath("uaaa",3,fs));
+    
+    printf("\ntesting rm pake string(ngapus folder b)\n");
+    File::rm("/usr/afwafa",5,fs);
+    printf("dir usr sekarang : \n");
+    retLs = File::ls(5, fs);
+    for (int i = 0; i < retLs.size(); i++) {
+        cout << "dir " << i << " : " << retLs[i] << endl;
+    }   
     return 0;
 }
 
