@@ -9,6 +9,10 @@
 #include "Inode.h"
 #endif
 
+#ifndef CONFLICT_H
+#include "Conflict.h"
+#endif
+
 class File {    
 public:    
     static const int MARK_RECYCLE=1;//alamat blok 1 tidak akan pernah dipakai(JANGAN DIGANTI DENGAN ANGKA 0)
@@ -53,9 +57,9 @@ public:
     static vector<byte> cat(int inode, Filesystem fs);
     //mengambil inode file pada path tersebut(direktori maupun file), mengembalikan -1 jika tidak ada
     static int getInodeFromPath(string filepath, int curDirInode, Filesystem fs);
-    //menyalin file dari filesystem sistem operasi ke virtual filesystem(BARU FILE)    
+    //menyalin file dari filesystem sistem operasi ke virtual filesystem    
     static bool cp(string pathfile, int iDir, Filesystem fs);       
-    //menyalin file dari virtual filesystem ke virtual filesystem(BARU FILE)
+    //menyalin file dari virtual filesystem ke virtual filesystem
     static bool cp(int iFile, int iDir, Filesystem fs);
     //menyalin file dari virtual filesystem ke filesystem sistem operasi
     //mengembalikan nilai false jika pathfile bukan folder(BARU FILE)

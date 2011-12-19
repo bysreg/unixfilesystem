@@ -90,7 +90,7 @@ bool Filesystem::format(string path, unsigned int size) {
     fout.close();
     //buka lagi untuk mkdir root
     Filesystem fs(path);
-    File::mkdir("/",fs,0);
+    File::mkdir("root",fs,0);
     //buat folder root    
     return true;
 }
