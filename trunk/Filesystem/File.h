@@ -57,6 +57,8 @@ public:
     static vector<byte> cat(int inode, Filesystem fs);
     //mengambil inode file pada path tersebut(direktori maupun file), mengembalikan -1 jika tidak ada
     static int getInodeFromPath(string filepath, int curDirInode, Filesystem fs);
+    //mengambil inode parent dari file yang ditunjuk pada filepath, mengembalikan -1 jika tidak ada
+    static int getInodeParentFromPath(string filepath,int curDirInode, Filesystem fs);
     //menyalin file dari filesystem sistem operasi ke virtual filesystem    
     static bool cp(string pathfile, int iDir, Filesystem fs);       
     //menyalin file dari virtual filesystem ke virtual filesystem
@@ -64,9 +66,13 @@ public:
     //menyalin file dari virtual filesystem ke filesystem sistem operasi
     //mengembalikan nilai false jika pathfile bukan folder(BARU FILE)
     static bool cp(int iFile, string pathfile, Filesystem fs);
-    //menghapus file iFile yang ada pada curDir(current) jika ada
+    //menghapus file/folder pada pathfile, mengembalikan false jika gagal
+    static bool rm(string pathfile, Filesystem fs);
+    //menghapus file/folder iFile yang ada pada iParDir(folder parentnya) jika ada
     //mengembalikan false jika gagal
-    static bool rm(int iFile, int curDir, Filesystem fs);
+    static bool rm(int iFile, int iParDir, Filesystem fs);
+    //memindahkan folder dari virtual filesystem ke virtual filesystem
+    static bool mv(string source, string dest, int iCurDir,Filesystem fs);
     
     
 protected:
@@ -78,6 +84,7 @@ protected:
 private:
     static bool cp_folder(string pathfile, int iDir, Filesystem fs);
     static vector<string> parsePath(string filepath);
+    static int removedirectoryrecursively(const char *dirname);
 };
 
 #endif	/* FILE_H */
