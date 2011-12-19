@@ -452,12 +452,27 @@ bool File::cp(int iFile, int iDir, Filesystem fs) {
     }
 
     File source(iFile, fs);
-
-    int iserr = File::mkfile(source.getName(), fs, iDir, &(source.getData()[0]), source.getSize());
-    if (iserr == -1) {
-        return false;
+    if(source.getType()==Inode::FILE) {
+        int iserr = File::mkfile(source.getName(), fs, iDir, &(source.getData()[0]), source.getSize());
+        if (iserr == -1) {
+            return false;
+        }
+        return true;
+    }else if(source.getType()==Inode::DIR) {
+        //1. buat folder salinan di tujuan
+        int faddress = File::mkdir(source.getName(), fs, iDir);
+        //2. copy semua anak di folder sumber ke folder faddress        
+        int address = 0;
+        int slot = 2;
+        while ((address = source.getAddress(slot)) != 0) {
+            if (address != MARK_RECYCLE) {
+                cp(address, faddress, fs);
+            }
+            slot++;
+        }
+        return true;
     }
-    return true;
+    return false;
 }
 
 bool File::cp(int iFile, string dirDest, Filesystem fs) {
@@ -480,12 +495,31 @@ bool File::cp(int iFile, string dirDest, Filesystem fs) {
 
     //buka file yang ingin dicopy
     File source(iFile, fs);
-    //buka folder tujuan copy
-    string destpathfile = dirDest + "/" + source.getName();
-    ofstream fout(destpathfile.c_str(), ios::binary);
-    fout.write((char*) (&(source.getData()[0])), source.getSize());
-    fout.close();
-    return true;
+    if(source.getType()==Inode::FILE) {//basis    
+        //buka folder tujuan copy
+        string destpathfile = dirDest + "/" + source.getName();
+        ofstream fout(destpathfile.c_str(), ios::binary);
+        fout.write((char*) (&(source.getData()[0])), source.getSize());
+        fout.close();
+        return true;
+    }else if(source.getType()==Inode::DIR) {//rekursif        
+        //1. buat folder di tujuan
+        if(Conflict::LINUXmkdir((dirDest+"/"+source.getName()).c_str(),0777)==-1) {//INI BUKAN mkdir program ini, tapi ini adalah mkdir bawaan linux
+            return false;
+        }else{
+            //2. iterasi folder anaknya
+            int address = 0;
+            int slot = 2;
+            while ((address = source.getAddress(slot)) != 0) {
+                if (address != MARK_RECYCLE) {
+                    cp(address, (dirDest+"/"+source.getName()).c_str(), fs);
+                }
+                slot++;
+            }
+            return true;
+        }
+        return false;
+    }
 }
 
 bool File::rm(int iFile, int iCurDir, Filesystem fs) {
@@ -744,7 +778,18 @@ int main() {
     retLs = File::ls(File::getInodeFromPath("mantab",5,fs), fs);
     for (int i = 0; i < retLs.size(); i++) {
         cout << "dir " << i << " : " << retLs[i] << endl;
-    }        
+    }       
+    
+    printf("\ntesting copy folder jaya yang ada di //usr/mantab ke root\n");
+    File::cp(File::getInodeFromPath("/usr/mantab/jaya",5,fs),fs.getIrootBlockNum(),fs);
+    printf("dir root sekarang : \n");
+    retLs = File::ls(3, fs);
+    for (int i = 0; i < retLs.size(); i++) {
+        cout << "dir " << i << " : " << retLs[i] << endl;
+    }
+    
+    printf("\ntesting copy folder root yang ada di virtual FS ke OS"); 
+    File::cp(3,"testout",fs);
     
     return 0;
 }
